@@ -1,0 +1,1245 @@
+---
+title: "Estimating abundance"
+author: "Aurélien Besnard for the team"
+date: "last updated: `r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    css: [default, "slides-theme.css"]
+    lib_dir: libs
+    nature:
+      ratio: '16:9' 
+      highlightStyle: github
+      highlightLines: true
+      slideNumberFormat: ''
+      titleSlideClass: [center, middle]
+---
+
+```{r setup, include=FALSE, echo=FALSE, cache = FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(comment = "")
+library(tidyverse)
+theme_set(theme_light())
+update_geom_defaults("point", list(size = 2)) 
+```
+
+## Population dynamics
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/intro2.png")
+```
+
+---
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Page3.png")
+```
+
+---
+
+# Background - Detectability issues
+
+Counting animals or plants in the field
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive1.JPG")
+```
+
+---
+
+# Background - Detectability issues
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive2.JPG")
+```
+
+Detectability is rarely (never) exhaustive
+
+---
+
+# Background - Detectability issues
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive3.JPG")
+```
+---
+
+# Background - Detectability issues
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive4.JPG")
+```
+
+Detectability (usually) varies over space
+
+---
+
+# Background - Detectability issues
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive5.JPG")
+```
+
+---
+# Background - Detectability issues
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive6.JPG")
+```
+
+Detectability (usually) varies over time
+
+---
+# Background - Detectability issues
+
++ If $N$ is the abundance of a particular species at a particular study area
+
++ And $C$ the number of individuals counted in the field in this area
+
++ We have $E(C)=pN$
+
++ Where $p$ is the probability of counting an individual in the study area
+
+---
+# Background - Detectability issues
+
++ Eventually population abundance is given by:
+
+$$N = \frac{C}{\alpha \times p}$$
+
++ $\alpha$ being the fraction of the study area that is sampled
+
++ *p* needs to be estimated to provide unbiased estimates 
+
++ And allows inference regarding abundance variations over time and space
+
+
+---
+# Sampling design
+
++ How to select sampling units in the study area to obtain unbiased estimates of abundance is a complex task
+
++ Need to define the statistical population of sample units and rely on some random selection process of the units to survey
+
++ Several sampling designs exist: Random, systematic, stratified, spatially balanced, etc
+
++ Not covered in this course
+
+---
+# Some useful reading on sampling design
+
+.pull-left[
+```{r, echo=FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("img/book_williams.jpg")
+```
+]
+
+.pull-right[
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("img/book_thompson.jpg")
+```
+]
+
+
+---
+# Issue 1: Estimating abundance when $p<1$
+
++ Several methods exist, depending on whether population is "closed" or "open"
+
++ Closed populations: Capture-recapture, Distance sampling, N-mixture
+
++ Open populations: Capture-recapture, open N-mixture
+
++ In this course: 
+ - Capture-recapture for closed populations
+ - Distance sampling
+ - N-mixture for closed populations
+
+---
+## What does "closed" populations mean?
+
++ Demographic closure:
+  - no birth
+  - no death
+  
++ Geographic closure:
+  - no immigration
+  - no emigration
+  
++ Between first and last field sessions
+
++ Implies to work over short time intervals 
+
++ 'Short' depending on species life history traits
+
+---
+## What does "closed" populations mean?
+
+.pull-left[
+```{r, echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("img/photo_tortue.jpg")
+```
+]
+
+.pull-right[
+```{r, echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("img/photo_papillon.jpg")
+```
+]
+
+---
+class: center, middle
+background-size: cover
+
+# Capture-recapture for closed populations
+
+---
+## Capture-recapture methods for closed populations
+
+Sample in a closed population
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive7.JPG")
+```
+
+---
+## Capture-recapture methods for closed populations
+
+Capture, mark and release some individuals (noted $n_1$)
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive8.JPG")
+```
+$p$ is typically below 1, not all present individuals are captured (here $p \approx 1/3$)
+---
+## Capture-recapture methods for closed populations
+
+Make a second visit, capture a second independent sample of individuals
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive10.JPG")
+```
+Among newly captured individuals, noted $n_2$, some are marked, noted $m$, others aren't 
+
+---
+## Capture-recapture methods for closed populations
+
++ The proportion of marked individuals after the first sample is $\displaystyle{\frac{n_1}{N}}$
+
++ The proportion of marked individuals in the second sample is $\displaystyle{\frac{m}{n_2}}$
+
++ Assuming sampling sessions are independent (individuals have equal detection probability whether they have already been captured or not)
+
++ Then the proportion of marked individuals in the second sample, *m*, is the proportion of marked individuals in the entire population:
+
+$$\hat{N}=\displaystyle{\frac{n_1 \times n_2}{m}}$$
+---
+## Capture-recapture methods for closed populations
+
+Another way of writing the Lincoln-Petersen index
+
+
+$n_{10}=N \times p_1 \times (1-p_2)$
+
+$n_{01}=N \times (1-p_1) \times p_2$
+
+$n_{11}=N \times p_1 \times p_2$
+
+with $p_1$ and $p_2$ the capture probability at first and second session respectively
+
+3 equations, 3 unknown values N, $p_1, p_2, \ldots$, no difficulties
+
+
+---
+## Capture-recapture methods for closed populations
+
+Rearranging the equations also leads to: 
+
+$$N=\displaystyle{\frac{n_{10}+n_{01}+n_{11}}{1 - (1-p_1) \times (1-p_2)}}$$
+or  
+
+$$N=\displaystyle{\frac{n_{10}+n_{01}+n_{11}}{p*}}$$
+
+with $p*$ the probability to be captured at least once and ${n_{10}+n_{01}+n_{11}}$ the total number of different individuals captured
+
+*Remember* $$N = \frac{C}{p}$$
+
+
+
+---
+## The Lincoln-Petersen index
+
+.pull-left[
+Petersen (fishes 1894)
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/photo_petersen.jpg")
+```
+]
+
+.pull-right[
+Lincoln (birds 1930)
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/photo_Lincoln.jpg")
+```
+]
+
+---
+## Lincoln-Petersen index requires individual identification
+
++ Usually implies some marking
+
++ Group marking can also works 
+
+---
+## Lincoln-Petersen index requires individual identification
+
+Physical alteration of individuals
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive36.JPG")
+``` 
+---
+## Lincoln-Petersen index requires individual identification
+
+Add some tags
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive37.JPG")
+``` 
+
+---
+## Lincoln-Petersen index requires individual identification
+
+Natural marks (including DNA)
+
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive38.JPG")
+``` 
+---
+# Lincoln-Petersen assumptions 1
+
+Population is closed demographically and geographically
+
+```{r, echo=FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("img/Diapositive11.JPG")
+```
+Population is estimated to 30 individuals (supra-population ?)
+
+---
+# Lincoln-Petersen assumptions 2
+
+Population is closed demographically and geographically
+
+**All individuals are equally likely to be caught in each sample**
+
+$n_1 = N \times p_1$, $n_2 = N \times p_2$, $m = N \times p_1 \times p_2$ 
+
+---
+# Lincoln-Petersen assumptions 3
+
+Population is closed demographically and geographically
+
+All individuals are equally likely to be caught in each sample
+
+**Marks are not lost (or unobserved)**
+
+*m* is under-estimated and then $\hat{N}$ over-estimated
+
+---
+# Lincoln-Petersen and then ?
+
+Population is closed demographically and geographically
+
+**All individuals are equally likely to be caught in each sample**
+
+Marks are not lost (or unobserved)
+
+Several sources of variation in capture:
+  - time - t (weather, sampling effort)
+  - behavior - b (trap-effect)
+  - individual heterogenity - h (age, sex, social status)
+  
+... and combination of these effects
+
+To test these effects, we need more than 2 sessions
+
+---
+# More than two sessions - capture histories
+
+Each line = one individual / each column = one field session
+```{r echo = FALSE}
+hist<-c('1011','0110','1010','...','...','1101')
+texte<-c('seen first session, not seen second session, seen third and fourth session',
+         'not seen first session, seen second and third session, not seen fourth session','','','','')
+tableproba<-data.frame(History=hist,Comment=texte)
+knitr::kable(tableproba, format = 'html')
+```
+---
+# More than two sessions - assumptions
+
+Population is closed demographically and geographically
+
+Marks are not lost and individuals are identified without error
+
+All individuals are equally likely to be caught in each sample 
+
+
+---
+# More than two sessions - capture histories
+
+The $M_0$ model - constant detection probability (among individuals, among sessions)
+
+Generalisation of Lincoln-Petersen index to more than two sessions
+
+```{r echo = FALSE}
+hist<-c('111','110','101','100','011','010','001','000')
+proba<-c('ppp','pp(1-p)','p(1-p)p','p(1-p)(1-p)','(1-p)pp','(1-p)p(1-p)','(1-p)(1-p)p','(1-p)(1-p)(1-p)')
+tableproba<-data.frame(History=hist,Probability=proba)
+knitr::kable(tableproba)
+```
+
+---
+# Maximum likelihood
+
++ The number of individuals with history 111 is provided by $n_{111}=N \times p \times p \times p$
+
++ We can do that for all histories, remember the equations we wrote for the Lincoln-Petersen index
+
++ Solving the equation system becomes more and more challenging as the number of field sessions increases 
+
++ Then using an algorithm called "maximum likelihood" we can search for the values of p and N that lead to the closest match between the number of observed histories ( $n_{111}$, $n_{110}$, etc) and their expected number given $\hat{p}$ and $\hat{N}$
+
+---
+# More than two sessions
+
++ The $M_0$ model is very constrained, possible to relax some assumptions
+
++ $M_t$ = Variation over time of detection probabilities
+
++ $M_b$ = Capture and recapture can be different (trap-dependence)
+
+
+---
+# Model Mt
+
++ Capture probabilities vary with session (weather conditions, field effort, observer experience, etc)
+
++ With $K$ sessions, $K+1$ parameters to estimate: $N, p_1, p_2, \ldots, p_K$
+
+---
+# Model Mt
+
+```{r echo = FALSE}
+hist <- c('111','110','101','100','011','010','001','000')
+proba1 <- c('ppp',
+            'pp(1-p)',
+            'p(1-p)p',
+            'p(1-p)(1-p)',
+            '(1-p)pp',
+            '(1-p)p(1-p)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+proba2 <- c('p1p2p3',
+            'p1p2(1-p3)',
+            'p1(1-p2)p3',
+            'p1(1-p2)(1-p3)',
+            '(1-p1)p2p3',
+            '(1-p1)p2(1-p3)',
+            '(1-p1)(1-p2)p3',
+            '(1-p1)(1-p2)(1-p3)')
+proba3 <- c('pcc',
+            'pc(1-c)',
+            'p(1-c)c',
+            'p(1-c)(1-c)',
+            '(1-p)pc',
+            '(1-p)p(1-c)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+Probavide <- c('','','','','','','','')
+tableproba <- data.frame(History=hist,M0=Probavide,Mt=proba2,Mb=Probavide)
+knitr::kable(tableproba, format = 'html')
+```
+
+
+---
+# Model Mb
+
++ Probability of first capture $p$ differs from probability of recapture $c$
+
++ Individuals can become trap-shy with $c<p$ or trap-happy with $c>p$
+
++ 3 parameters to be estimated: $N, p, c$
+
+---
+# Model Mb
+
+```{r echo = FALSE}
+hist<-c('111','110','101','100','011','010','001','000')
+proba1 <- c('ppp',
+            'pp(1-p)',
+            'p(1-p)p',
+            'p(1-p)(1-p)',
+            '(1-p)pp',
+            '(1-p)p(1-p)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+proba2 <- c('p1p2p3',
+            'p1p2(1-p3)',
+            'p1(1-p2)p3',
+            'p1(1-p2)(1-p3)',
+            '(1-p1)p2p3',
+            '(1-p1)p2(1-p3)',
+            '(1-p1)(1-p2)p3',
+            '(1-p1)(1-p2)(1-p3)')
+proba3 <- c('pcc',
+            'pc(1-c)',
+            'p(1-c)c',
+            'p(1-c)(1-c)',
+            '(1-p)pc',
+            '(1-p)p(1-c)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+Probavide<-c('','','','','','','','')
+tableproba<-data.frame(History=hist,M0=Probavide,Mt=Probavide,Mb=proba3)
+knitr::kable(tableproba, format = 'html')
+
+```
+
+---
+# All models
+```{r echo = FALSE}
+hist<-c('111','110','101','100','011','010','001','000')
+proba1 <- c('ppp',
+            'pp(1-p)',
+            'p(1-p)p',
+            'p(1-p)(1-p)',
+            '(1-p)pp',
+            '(1-p)p(1-p)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+proba2 <- c('p1p2p3',
+            'p1p2(1-p3)',
+            'p1(1-p2)p3',
+            'p1(1-p2)(1-p3)',
+            '(1-p1)p2p3',
+            '(1-p1)p2(1-p3)',
+            '(1-p1)(1-p2)p3',
+            '(1-p1)(1-p2)(1-p3)')
+proba3 <- c('pcc',
+            'pc(1-c)',
+            'p(1-c)c',
+            'p(1-c)(1-c)',
+            '(1-p)pc',
+            '(1-p)p(1-c)',
+            '(1-p)(1-p)p',
+            '(1-p)(1-p)(1-p)')
+Probavide<-c('','','','','','','','')
+tableproba<-data.frame(History=hist,M0=proba1,Mt=proba2,Mb=proba3)
+knitr::kable(tableproba, format = 'html')
+```
+
+---
+# Model with heterogeneity
+
++ Capture can depend on several unknown variables (age, sexe, social status, etc)
+
++ Each individual as a unique capture probability
+
++ $N+1$ parameters to estimate: $N, p_i$ with $i=1, 2, \ldots, N$
+
++ This model has too many parameters, we can use Pledger's mixture models
+
+---
+# Pledger's mixture model
+
++ Assume individuals belong to two groups with different capture probabilities
+
++ A proportion $\pi$ belongs to the first group with capture probability $p_H$
+
++ And $(1-\pi)$ to the second group with $p_L$
+
++ Then $p=\pi \times p_H + (1-\pi) \times p_L$
+
++ We can just use this equation in $M_0$ and get four parameters: $N, \pi, p_H$ and $p_L$
+
+
+
+---
+# More complex models
+
++ Combining different effects: $M_{bt}, M_{bh}, M_{th}$
+
++ Use some individuals covariates: Age, sex, body conditions, etc
+
+
+---
+# Model selection
+
++ We can fit several models, each returning a different $\hat{N}$
+
++ How to select for the one that is the best given the data ? 
+
++ The most complex models are always the one that explain best the data (increase explained variance)
+
++ Yet sometimes the complexification yields to only very small improvement of explained variance
+
++ Idea: **penalize models with too many parameters**
+
+---
+# Akaike information criterion (AIC)
+
+$$AIC = Deviance + 2 K$$
+
++ with $Deviance$, a measure of the unexplained variance of the model 
+
++ $K$ the number of parameters in the model
+
++ AIC makes the balance between *quality of fit* and *complexity* of a model
+
++ Best model is the one with lowest AIC value
+
+*Note that two models are difficult to distinguish if $\Delta \text{AIC} < 2$*
+
+---
+# Some thoughts on closure assumption
+
++ Some tests of closure exist (Otis et al 1978, Stanley and Burnham 1999), available in R (package "secr")
+
++ Yet very sensitive to other sources of variations such as capture heterogeneity
+
++ Low performance when p is low
+
++ Some authors now rely more on ecological justification than statistical tests 
+
+---
+# Cited references
+
+Huggins R. M. (1989). On the statistical analysis of capture-recapture experiments.  *Biometrika* 76:133-140.
+
+Otis, D. L., Burnham, K. P., White, G. C. and Anderson, D. R. (1978). Statistical inference from capture data on closed animal populations. *Wildlife Monographs* 62: 1–135.
+
+Pledger S. (2000). Unified Maximum Likelihood Estimates for Closed Capture–Recapture Models Using Mixtures. *Biometrics* 56: 434-442. 
+
+Stanley, T. R. and Burnham, K. P. (1999). A closure test for time-specific capture–recapture data. *Environmental and Ecological Statistics* 6:197–209.
+
+---
+# Further reading
+
+.pull-left[
+```{r, echo=FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("img/book_williams.jpg")
+```
+]
+
+.pull-right[
+
+http://www.phidot.org/software/mark/docs/book/
+```{r, echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("img/book_mark.jpg")
+```
+]
+
+---
+background-color: #234f66
+## <span style="color:white">Live demo in R</span>
+
+.center[
+![](img/b5b086f9cc403008ba7be5dd508cfed2.gif)
+]
+
+---
+class: center, middle
+background-size: cover
+
+# Distance sampling
+
+---
+
+# Count individuals along strip transects
+
+Traditional methods = count animals (or plants) along transects of fixed width
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive12.JPG")
+```
+
+---
+# Count individuals along strip transects
+
+Assume all individuals in the strip are detected and counted
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive13.JPG")
+```
+
+---
+# Count individuals inside a circular area
+
+The survey area can also be a circle = circular plot
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive14.JPG")
+```
+
+---
+# Count individuals inside a circular area
+
+Assume all individuals in the circle are detected and counted
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive15.JPG")
+```
+
+---
+## Estimating density and abundance using counts (1)
+
++ Using raw counts in the sample strips/circles
+
++ Density is easily estimated using: 
+
+$$\hat{D}=\frac{\sum_{i=1}^ny_i}{\sum_{i=1}^n{a_i}}$$
+
++ With $y_i$ the count at each sample unit, and $a_i$ the surface of each sample unit
+
++ That can be translated into abundance $N$ with: 
+$$\hat{N} = \frac{\sum_{i=1}^ny_i}{\alpha}$$
+
++ Where $\alpha$ is the the proportion of the study area eventually sampled
+
+
+---
+## Estimating density and abundance using counts (2)
+
+```{r, echo=FALSE, out.width="50%", fig.align='center'}
+knitr::include_graphics("img/Diapositive13.JPG")
+```
+
+$L$ = transect length, $w$ = transect width, $y$ = number of birds detected
+
+$$\hat{D}=\frac{\sum_{i=1}^ny_i}{\sum_{i=1}^nL_i \times w_i}$$
+
+---
+## Estimating density and abundance using counts (3)
+
+```{r, echo=FALSE, out.width="50%", fig.align='center'}
+knitr::include_graphics("img/Diapositive15.JPG")
+```
+
+$w$ = radius, $y$ = number of birds detected
+
+$$\hat{D}=\frac{\sum_{i=1}^ny_i}{\sum_{i=1}^n\pi \times w_i^2}$$
+
+---
+# Assumptions
+
++ All individuals in the sample area are detected and counted
+
++ Yet detection probability is (always) below 1 (see lecture on detection issue)
+
++ It can vary between sample units and even in sample units (depending on vegetation cover for instance)
+
+
+
+---
+# Distance sampling - background (1)
+
++ Distance sampling rational was formulated by Steve Buckland, early 1980
+
++ The number of detections tends to decrease with distance to observer...
+
++ ...some information on detection probability is encapsulated in distances
+
++ Can we estimate detection probability by recording the distances of detected individuals rather than their presence only ?
+
+---
+# Distance sampling - background (2)
+
++ Observations along a transect
+
++ Record perpendicular distances to transects, assume not all individuals are detected
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive16.JPG")
+```
+
+---
+# Distance sampling - background (3)
+
+Observations along several transects
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive17.JPG")
+```
+
+---
+# Distance sampling - background (4)
+
+Observations from a fixed location
+
+Record radial distances to the point, assume not all individuals are detected
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive18.JPG")
+```
+
+---
+# Distance sampling - background (5)
+
+Observations from several fixed locations
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive19.JPG")
+```
+
+---
+# Estimating density when detection < 1
+
+* Remember first lecture on detection issue, but also Capture-recapture: $N = \frac{C}{p}$
+
+$$\hat{D}=\frac{\sum_{i=1}^ny_i}{a \times \hat{p}}$$
+
++ With $p$ the mean detection probability on the entire sampled area of surface $a$
+
+
++ How to estimate $p$ using distance data ?
+
+---
+## Recorded data 
+
++ Distance sampling recorded data typically look like:
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("img/Diapositive22.JPG")
+```
+
++ If $p$ was equal to one, the histogram would be flat
+
++ The decrease results from a decreasing detection prob with distance to observer
+
+---
+# Estimating detection with distance data (1)
+
+Some individuals are detected, some are not
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive21.JPG")
+```
+
+---
+# Estimating detection with distance data (2)
+
+For instance, if 100 individuals are observed, 70% of the individuals are detected (below the curve) and 30% not detected
+
+$$\hat{N} = \frac{100}{0.70} = 143$$
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("img/Diapositive21.JPG")
+```
+
+---
+# How to extract *p* from these data ?
+
++ We need to estimate $p$
+
++ To do that, we need to fit a detection curve to the raw data
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive20.JPG")
+```
+---
+# How to extract *p* from these data ?
+
+.pull-left[
+```{r, echo=FALSE, out.width="90%", fig.align='center'}
+knitr::include_graphics("img/Diapositive21.JPG")
+```
+]
+
+.pull-right[
+
+$\displaystyle{\hat{p}=\frac{\int_{0}^{w} \hat{g}(y)\,dy}{w}}$
+
+with $w$ the distance at which data are truncated and $g(y)$ the detection curve 
+
+it is the $\frac{\mbox{area under the curve}}{\mbox{area of the rectangle}}$ 
+]
+
+---
+# Modelling the detection function (1)
+
++ $g(y)$, detection probability given the distance, needs to be estimated
+
++ $g(y)$ is not known and may vary a lot due to observer experience and environment
+
++ Distance sampling strategy is to go for a few models for $g(y)$ with good properties:
+
+    - model robustness
+    - shape criterion
+    - efficiency
+
+
+---
+# Modelling the detection function (2)
+
++ Model robustness
+
+    - General function that can take a variety of shapes
+
+    - Robust w.r.t. pooling
+
++ Shape criterion 
+
+    - A “shoulder” near the transect line (detection approx. 1 around the line / point)
+
++ Efficiency 
+
+    - Provides precise estimates – use Maximum Likelihood
+
+---
+# Modelling the detection function (3)
+
+Two components for $g(y)$:
+
+- A ‘key’ function: Uniform, half-normal, hazard-rate
+
+- A ‘series’ expansion: Cosine, simple polynomial, hermite polynomial
+
+
+---
+# Fit a detection curve to the raw data
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive22.JPG")
+```
+
+
+---
+# Uniform *key*
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive23.JPG")
+```
+
+---
+# Half-normal *key*
+
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive24.JPG")
+```
+
+
+---
+# Half-normal *key*
+
+Changing $\sigma$ allows changing tail length
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive25.JPG")
+```
+
+---
+# Hazard-rate *key*
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive26.JPG")
+```
+
+---
+# Hazard-rate *key*
+
+Changing $b$ allow changing shoulder and tail
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive27.JPG")
+```
+---
+# Series expansion
+
+- Cosine $\sum a_j \cos (\frac{j \pi y}{w})$ 
+
+- Simple polynomial $\sum a_j (\frac{y}{w})^2j$
+
+- Hermite polynomial $\sum a_j H_2j (\frac{y}{\sigma})$
+
+---
+# Series expansion
+
+Uniform key function + single cosine adjustment term
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive28.JPG")
+```
+
+---
+# Three critical assumptions
+
+- Individuals on the line or point are all detected $g(0)=1$
+
+- Individuals are detected at their initial location
+
+- Distances are recorded accurately
+
+---
+# Individuals on the line or point are all detected
+
+If $g(0)$ is below 1 and unknown, density is underestimated by an unknown factor
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive29.JPG")
+```
+
+---
+# Individuals on the line or point are all detected
+
++ Possible to estimate $g(0)$ using two or more independent observers or radiotracked individuals
+
++ Ensure $g(0)=1$ using cameras, trained pointing dogs, but be aware of potential bias
+
++ Use more recent modelling approach, e.g. distance sampling with temporary emigration (requires repeated surveys in the same sampling unit)
+
+
+---
+## Individuals are detected at their initial location
+
++ Assumption 2: Animals do not move before detection (snapshot)
+
++ Effect of violation: 
+     
+     - Random movements induce positive bias; provided object movement is slow relative to movement of the observer, bias is small
+     - Responsive movements can cause large bias; positive if there is attraction to the observer, negative if there is avoidance
+
++ Recommendations: 
+    
+    - In point transects, wait once on site before proceeding
+    - In line transects, look well ahead
+
+
+---
+# Measures are recorded accurately
+
++ Assumption 3: Distances are measured accurately
+
++ Effect of violation: 
+      
+      - The estimator is fairly robust to random errors in measurement
+      - It is sensitive to extreme outliers and to rounding distances
+
++ Recommendations:
+
+     - If exact measurements are difficult, use intervals (group data)
+     - If outliers, use truncation (5-10% of the largest observations)
+     - If heaping (convenient ‘rounding’), use intervals and choose cutpoints such that “heaps” are at the midpoint of an interval
+     - Accurate measurement is most effective solution, so use appropriate tools (tape measures; laser range finders; compass for angles)
+
+---
+# Goodness-of-fit tests
+
++ We need to verify that the fit of the model makes sense
+
++ Several diagnostics and tests have been developed (QQplot, Chi-square tests, etc), depends on whether data are continuous or in classes of distance
+
++ The general principle is to verify that there is no large decrepancy between the prediction from the fitted model and the raw data
+
+---
+# Line or point transects ?
+
+Point transects are:
+- Relevant for populations distributed in patches
+- Convenient to use when the area is difficult to access / survey
+- Naturally suited for stratification
+
+Line transects are:
+- Efficient for sparsely distributed populations
+- Effective in low densities
+
+---
+# Further readings 
+
+
+```{r, echo=FALSE, out.width="25%", fig.align='center'}
+knitr::include_graphics("img/book_distance.jpg")
+```
+
+
+---
+background-color: #234f66
+## <span style="color:white">Live demo in R</span>
+
+.center[
+![](img/b5b086f9cc403008ba7be5dd508cfed2.gif)
+]
+
+
+---
+class: center, middle
+background-size: cover
+
+# N-mixture
+
+---
+
+# Count on a fixed sample area
+
++ Traditional methods = count animals (or plants) along transects of fixed width
+or on quadrat, or on circular plots
+
++ These counts are affected by detection issues
+```{r, echo=FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("img/Diapositive12.JPG")
+```
+
+---
+# Repeated counts at the same sample unit
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive30.JPG")
+```
+True abundance $N=10$
+
+---
+# Repeated counts at the same sample unit
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive31.JPG")
+```
+True abundance $N=10$, count at first visit is 4
+
+---
+# Repeated counts at the same sample unit
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive32.JPG")
+```
+True abundance $N=10$, count at second visit is 3
+
+---
+# Repeated counts at the same sample unit
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("img/Diapositive33.JPG")
+```
+True abundance $N=10$, count at third visit is 6
+
+---
+# Repeated counts with imperfect detection
+
++ When counts are repeated on the same sampling unit, some variations are observed
+
++ This is due to random process related to imperfect detection
+
++ Example: sex-ratio in humans is close to 0.5
+
+    - Probability to have a son is therefore 0.5
+    - Expected number of sons in four siblings is 2
+    - Yet some parents have four sons and zero daughters
+
+---
+# Repeated counts with imperfect detection
+
++ Example: true abundance is 5, detection probability is 0.5
+
++ Repeated counts on the same unit with imperfect detection leads to variations
+
+```{r, echo=FALSE, out.width="50%", fig.align='center'}
+knitr::include_graphics("img/Diapositive34.JPG")
+```
+
++ Repeated counts on the same units encapsulate information on detection and abundance
+
+---
+# N-mixture models (Royle 2004)
+
++ N-mixture models take advantage of these variations between counts at the same sample unit
+
++ Requires some spatial replications (several sampling units) and temporal replications (repeated counts at the same units) - same design as *site occupancy models*
+
++ Some strong assumptions:
+
+    - Abundance at a sampling unit does not change between successive counts ("closed population")
+    - Individuals have the same detection probability (no heterogeneity)
+    - Abundances at the sampling units are Poisson distributed
+    - Sampling sessions are independent (no trap-dependence)
+
+---
+# N-mixture models (Royle 2004)
+
+Typical dataset used for N-mixture models
+
+```{r, echo=FALSE, out.width="50%", fig.align='center'}
+set.seed(254)
+xinit<-rpois(10,3)
+hist<-matrix(0,nrow=10,ncol=3)
+for (i in 1:10)
+{
+  if (xinit[i]>0){hist[i,]<-rbinom(3,xinit[i],0.5)}
+  
+}
+tt<-data.frame(site = seq(1:10), counts = hist)
+knitr::kable(tt, format = 'html')
+```
+
+---
+# N-mixture models formulation
+
++ N-mixture can be formulated as hierarchical models
+
++ A state process describing the system 
+
+$$N_i \sim \mbox{Poisson}(\lambda)$$
+with $\lambda$ the mean abundance at the sites
+
++ An observation process corresponding to detection issues
+
+$$y_{it} \sim \mbox{Binomial}(N_i,p)$$
+
++ Covariates can be added on abundance (e.g. vegetation cover, elevation) and on detection probability (e.g. vegetation cover, date, observer experience)
+
+---
+# N-mixture models - to use with caution
+
++ The method has been highly controversial for years
+
++ Couturier et al. 2013 - Identifiability problems when $p$ is low or highly variable
+
++ Barker et al. 2017 - Without auxillary information about $p$, count data cannot distinguish between N-mixture model or other possible models of $N$
+
++ Dennis 2015, Kéry 2017 - Some parameters not identifiable especially with negative binomial distribution instead of Poisson  
+
++ Link et al. 2018 - Estimates sensitive to violation of double counting and constant $\lambda / p$ - GOF unable to detect this
+
++ Conclusion: check parameter $K$ (see live demo), perform GOF, do not rely on negative binomial distribution
+
+---
+# N-mixture models - further reading
+
++ Open N-mixture - Dail and Madsen 2011 / Hostetler and Chandler 2015
+
++ Generalized Distance sampling - Accomodates for temporary emigration - Chandler (2011)
+
++ Community N-mixture models - Yamaura et al. (2012)
+
+
+---
+# Cited references (1)
+
+Barker, R.J., Schofield, M.R., Link, W.A. and Sauer, J.R. (2018). On the reliability of N-mixture models for count data. *Biometrics* 74: 369-377.
+
+Chandler, R.B., Royle, J.A. and King, D.I. (2011). Inference about density and temporary emigration in unmarked populations. *Ecology* 92: 1429-1435.
+
+Couturier, T., Cheylan, M., Bertolero, A., Astruc, G. and Besnard, A. (2013). Estimating abundance and population trends when detection is low and highly variable: A comparison of three methods for the Hermann's tortoise. *Journal of Wildlife Management* 77: 454-462. 
+
+Dail, D. and Madsen, L. (2011). Models for Estimating Abundance from Repeated Counts of an Open Metapopulation. *Biometrics* 67: 577-587.
+
+Dennis, E.B., Morgan, B.J. and Ridout, M.S. (2015). Computational aspects of N-mixture models. *Biometrics* 71: 237-246. 
+
+---
+# Cited references (2)
+
+Hostetler, J.A. and Chandler, R.B. (2015). Improved state-space models for inference about spatial and temporal variation in abundance from count data. *Ecology* 96: 1713-1723.
+
+Kéry, M. (2018). Identifiability in N-mixture models: a large-scale screening test with bird data. *Ecology* 99: 281-288.
+
+Link, W.A., Schofield, M.R., Barker, R.J. and Sauer, J.R. (2018). On the robustness of N-mixture models. *Ecology* 99: 1547-1551.
+
+Royle, J.A. (2004). N-Mixture Models for Estimating Population Size from Spatially Replicated Counts. *Biometrics* 60: 108-115.
+
+Yamaura, Y., Royle, J.A., Shimada, N. et al. (2012). Biodiversity of man-made open habitats in an underused country: a class of multispecies abundance models for count data. *Biodivers Conserv* 21, 1365–1380. 
+
+
+
+---
+background-color: #234f66
+## <span style="color:white">Live demo in R</span>
+
+.center[
+![](img/b5b086f9cc403008ba7be5dd508cfed2.gif)
+]
+

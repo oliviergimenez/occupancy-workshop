@@ -1,0 +1,38 @@
+---
+title: "Estimating wolf occupancy with `R`."
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+**What**: In this virtual workshop, we will show how to infer occupancy while accounting for imperfect detection. Using a real case study on wolves (Canis lupus)  that have been recolonizing France since the early 1990s, we will show how to estimate the proportion of area occupied by the species. We will also show how to asses the dynamic of occupancy by estimating colonization and extinction processes. If time allows, we will also cover recent models that allow accounting for false positives due to species misidentification as well as species interactions. The workshop will be a combination of lecture and live coding demonstrations in R using package unmarked.
+
+**For whom**: This is a workshop for ecologists. Basic knowledge of `R` is required. See [R for beginners](https://cran.r-project.org/doc/contrib/Paradis-rdebuts_en.pdf) by E. Paradis for an introduction.
+
+**How**: The format of the workshop will be a combination of lectures and live demonstrations in R with packages `unmarked`.
+
+**Who**:   
+Lecturer: [Olivier Gimenez](https://twitter.com/oaggimenez)
+
+**When**: May 16, 2023 <br> 2pm-5pm (Paris time UTC+2 GMT+1)
+
+**Where**: On Zoom
+
+### Program 
+
+To be announced.
+
+### Requirements
+
++ Install [`R`](https://cloud.r-project.org/) and [`RStudio`](https://rstudio.com/products/rstudio/download/#download). `RStudio` is recommended but not mandatory. 
+
++ Install the R packages `unmarked` directly from the console with
+```{r eval = FALSE, echo = TRUE}
+install.packages("unmarked")
+```
+
+### Reuse {.appendix}
+
+Text and figures are licensed under Creative Commons Attribution [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Any computer code (R, HTML, CSS, etc.) in slides and worksheets, including in slide and worksheet sources, is also licensed under [MIT](https://github.com/oliviergimenez/occupancy-workshop/blob/master/LICENSE.md). 
