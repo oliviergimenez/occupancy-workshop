@@ -23,8 +23,10 @@ navbar:
           href: tutorials/practical3-falsepositives.html
         - text: "Practical 4: Multispecies"
           href: tutorials/practical4-multispecies.html
-#    - text: "Datasets"
-#      href: tutorials/dat.zip
+        - text: "Data"
+          href: https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/data
+        - text: "References"
+          href: https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/references
     - icon: fab fa-github
       href: https://github.com/oliviergimenez/occupancy-workshop    
 output: distill::distill_article
