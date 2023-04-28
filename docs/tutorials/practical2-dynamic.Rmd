@@ -14,208 +14,248 @@ date: "May 2023"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, 
                       message = FALSE, 
-                      warning = FALSE, 
+                      warning = FALSE,
+                      cache = TRUE,
                       dpi = 300, 
                       fig.height = 6, 
                       fig.width = 1.777777*6)
 ```
 
-# Misc
+# Objectives
 
++ Fit dynamic (multi-season) occupancy models
++ Map occupancy
+
+# Pre-requisites
+
+Load some packages:
 ```{r}
-library(tidyverse)
-library(sf)
-theme_set(theme_light(base_size = 16))
-set.seed(1234)
+library(tidyverse) # manipulate and visulaize data
+theme_set(theme_light(base_size = 16)) # set theme for visualisation and font size
+library(unmarked) # occupancy modelling
+library(sf) # spatial dataviz
 ```
 
+# Data
 
-# Lecture des données
+We use data from *Mapping and explaining wolf recolonization in France using dynamic occupancy models and opportunistic data* by Louvrier et al. in Ecography available at <https://onlinelibrary.wiley.com/doi/abs/10.1111/ecog.02874>. Data were collected between 1994 and 2017 (23 years or primary occasion). Occasions are months December, January, February and March (4 visits or secondary occasions). A 100km$^2$ grid was overlaid over France and detections and non-detections were collected. See paper for more details. 
 
-On charge le package `unmarked` pour ajuster les modèles dynamique d'occupancy.
+## Read in data
+
+First detection/non-detection data:
 ```{r}
-library(unmarked)
-```
-
-Les données sont celles du stage de Valentin, jusqu'à 2017 si je ne m'abuse, mises à jour entre Valentin, Julie et Christophe, en particulier sur l'effort. 
-On a les données de détections/non-détections dans l'objet `y`, de dimensions le nombre de cellules de la grille utilisée, le nombre d'occasions secondaires (les mois d'hiver) et le nombre d'années. A noter que pur prendre en compte l'effort de prospection nul pour certaines années sur certaines cellules, on a dans les obs des NA.
-```{r}
-load("data/WS.RData")
+y <- readRDS("data/wolf_louvrier.rds")
 dim(y)
 ```
-```{r echo = FALSE}
-PO2 <- PO
-PO2[PO2==0] <- NA
-mask <- is.na(PO2)
-for (i in 1:nrow(mask)){
-  for (j in 1:ncol(mask)){
-    if (mask[i,j]) y[i,1:4,j] <- NA 
-  }
-}
-```
 
-# Formatage des données
+There are > 3000 cells in row. In columns we have 23 years * 4 visits, arranged in visits within year format, that is visit 1 to visit 4 for year 1994 in the first four columns, then visit 1 to visit 4 for year 1995, and so on.
 
-On met les données de détection/non-détection au format `unmarked` avec occasions primaire et secondaires.
+Now read in some covariates data. First the survey effort which is (approx) the number of observers per cell:  
 ```{r}
-Yter <- y[,,1]
-for (i in 2:dim(y)[3]){
-  Yter <- cbind(Yter,y[,,i])
-}
-dim(Yter) # 3547 x 92 ou 92 est 4 occ x 23 ans
+effort <- readRDS("data/effort_louvrier.rds")
 ```
 
-On vérifie que tous les sites ont au moins 1 obs, et on supprime les cellules sur lesquelles aucun échantillonnage n'a jamais été fait dans les données. On fait pareil pour les covariables.
+The effort covariate is a yearly site-level covariate, with values that do not vary between visits within a year, but that do vary between years:
 ```{r}
-ind <- apply(Yter, 1, function(x) all(is.na(x)))
-sum(ind)
-Yter <- Yter[!ind, ]
-y <- y[!ind,, ]
-mask <- mask[!ind,]
-dim(CovEnvbis) # covariables environnementales
-CovEnvbis <- CovEnvbis[!ind, ]
-dim(Sbis) # autocorrélation spatiale à courte distance = 10km = 8 voisins proches 
-Sbis <- Sbis[!ind,]
-dim(Lbis) # autocorrélation spatiale à longue distance = 150 km
-Lbis <- Lbis[!ind,]
-dim(PO) # la fameuse pression d'observation 
-PO <- PO[!ind,]
+dim(effort)
 ```
 
-On rassemble les covariables dont les valeurs diffèrent selon la cellule uniquement.
+We have some environmental covariates as well, all site-level covariates:
+```{r}
+envcov <- readRDS("data/envcov_louvrier.rds")
+```
+
+The 7 covariates are specifically in column: farmland cover, altitude, distance to closest barrier, road density, forest cover, high altitude, rock cover:
+```{r}
+colnames(envcov)
+```
+
+Last, we have two additional yearly site-level covariates which capture dispersal abilities of wolves, namely the number of occupied neighboring cells at short (10km) and long (150km) distance:
+```{r}
+# short distance
+SDAC <- readRDS("data/shortd_spatialautocorr.rds")
+# long distance 
+LDAC <- readRDS("data/longd_spatialautocorr.rds")
+```
+
+## Format data
+
+Site-level covariates first:
 ```{r}
 sites.covs <- data.frame(
-  forest = CovEnvbis[,"p_forest"], 
-  agr = CovEnvbis[,"p_agri"], 
-  rock = CovEnvbis[,"p_rock"], 
-  halt = CovEnvbis[,"p_halt"], 
-  alt = CovEnvbis[,"p_alti"], 
-  dbarr = CovEnvbis[,"p_dbarr"],
-  acc = CovEnvbis[,"p_road"])
+  forest = envcov[,"p_forest"], # forest cover
+  agr = envcov[,"p_agri"], # farmland cover
+  rock = envcov[,"p_rock"], # rock cover
+  halt = envcov[,"p_halt"], # high altitude
+  alt = envcov[,"p_alti"], # altitude
+  dbarr = envcov[,"p_dbarr"], # distance to closest barrier
+  acc = envcov[,"p_road"]) # road density
 ```
 
 On rassemble les covariables dont les valeurs diffèrent selon la cellule et l'année.
 ```{r}
-year <- matrix(rep(c('01',
-             '02',
-             '03',
-             '04',
-             '05',
-             '06',
-             '07',
-             '08',
-             '09',
-             '10',
-             '11',
-             '12',
-             '13',
-             '14',
-             '15',
-             '16',
-             '17',
-             '18',
-             '19',
-             '20',
-             '21',
-             '22',
-             '23'), nrow(Yter)), 
-             nrow = nrow(Yter), 
-             ncol = 23, 
-             byrow = TRUE)
-trendyear <- matrix(rep(1:23,nrow(Yter)), 
-                    nrow=nrow(Yter),
+year <- matrix(rep(c('01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'),nrow(y)), 
+               nrow = nrow(y), 
+               ncol = 23, 
+               byrow = TRUE)
+head(year)
+```
+
+
+```{r}
+trendyear <- matrix(rep(1:23,nrow(y)), 
+                    nrow=nrow(y),
                     ncol=23, 
                     byrow=TRUE)
+head(trendyear)
+```
+
+Yearly site-level covariates:
+```{r}
 yearly.site.covs <- list(
-  PO = PO[,1:23], # effort echantillonnage (prospection theorique)
-  year = year, # effet annee
-  trendyear = trendyear, # tendance lineaire annee
-  SDAC = Sbis[,1:23], # autocorrelation courte distance
-  LDAC = Lbis[,1:23]) # autocorrelation longue distance
+  effort = effort, # effort
+  year = year, # year effect
+  trendyear = trendyear, # linear trend over time
+  SDAC = SDAC, # short distance
+  LDAC = LDAC) # long distance
 ```
 
 On rassemble les covariables dont les valeurs diffèrent selon les occasions secondaires.
 ```{r}
-occ <- array(0,dim(y))
-for (i in 1:dim(y)[1]){
-	for (j in 1:dim(y)[3]){
-		occ[i,1:dim(y)[2],j] <- c('1','2','3','4') # dec, jan, fev, mar
-		if (mask[i,j]) occ[i,1:dim(y)[2],j] <- NA
+occ <- array(0,c(3450,4,23))
+for (i in 1:3450){
+	for (j in 1:23){
+		occ[i,1:4,j] <- c('1','2','3','4') # dec, jan, feb, mar
+		if (effort[i,j] == 0) occ[i,1:4,j] <- NA
 				}
 	}
 occbis <- occ[,,1]
-for (i in 2:dim(y)[3]){
+for (i in 2:23){
 	occbis <- cbind(occbis,occ[,,i])
 }
 dim(occbis) # 3450 x 92 ou 92 est 4 occ x 23 ans
 obs.covs <- list(OCC = occbis)
 ```
 
-On crée un `data.frame` (un objet fourre-tout dans `R`) pour passer dans le package `unmarked`. 
+Organise detection/non-detection data and covariates in `data.frame` that can be used by `unmarked`: 
 ```{r}
-umf <- unmarkedMultFrame(y = Yter, 
+umf <- unmarkedMultFrame(y = y, 
                          siteCovs = sites.covs,
                          yearlySiteCovs = yearly.site.covs, 
                          obsCovs = obs.covs,
                          numPrimary = 23)
 ```
 
-En résumé, on a quoi dans ces données? 
+Summarize data:
 ```{r}
 summary(umf)
 ```
 
-# Estimation des paramètres
+# Model with constant parameters, except detection which is a function of effort
 
-Ici on ajuste le meilleur modèle d'occupancy trouvé dans le papier de Julie. Cela prend 4-5 minutes sur mon ordinateur. Un peu long, mais bcp moins que les plusieurs heures nécessaires à ajuster le modèle en bayésien.
-```{r eval = FALSE}
+Fit a model with all parameters constant,but detection which is a function of effort:
+```{r}
+fm0 <- colext(
+  psiformula = ~ 1,     # initial occupancy
+  gammaformula =  ~ 1,  # colonization
+  epsilonformula = ~ 1, # extinction
+  pformula = ~ effort,  # detection
+  data = umf, # data
+  control = list(trace = 1)) # display number of iterations by blocks of 10
+```
+
+Inspect results:
+```{r}
+fm0
+```
+
+Model coefficients (or parameters):
+```{r}
+coef(fm0)
+```
+
+Get parameter estimates on natural scale. Start with colonization:
+```{r}
+backTransform(fm0, type = "col")
+```
+
+Then extinction:
+```{r}
+backTransform(fm0, type = "ext")
+```
+
+And initial occupancy:
+```{r}
+backTransform(fm0, type = "psi")
+```
+
+Finally, we get detection as a function of effort:
+```{r}
+# grid
+effort_grid <- seq(min(yearly.site.covs$effort), max(yearly.site.covs$effort), length = 100)
+# predict on logit scale
+logit_det <- coef(fm0)[4] + coef(fm0)[5] * effort_grid
+# backtransform
+det <- plogis(logit_det)
+# plot
+plot(x = effort_grid, 
+     y = det, 
+     type = 'l', 
+     xlab = "effort", 
+     ylab = "estimated detection probability", 
+     lwd= 3)
+```
+
+# Model with all covariates as in the Louvrier et al paper
+
+Here we fit the model with all covariates as considered by Louvrier and colleagues in their paper:
+```{r}
 fm <- colext(
   psiformula = ~ 1,                                            # initial occupancy
   gammaformula =  ~ forest + agr + halt + alt + SDAC + LDAC,  # colonization
   epsilonformula = ~ 1,                                       # extinction
-  pformula = ~ PO + acc + OCC,                                # detection
-  umf,
-  control = list(trace = 1, maxit = 1e4), 
-  se = FALSE) # pour aller plus vite, je ne calcule pas les SE et intervalles de confiance
-save(fm, file = "res/dynoccloup.RData")
+  pformula = ~ effort + acc + OCC,                                # detection
+  data = umf, # data
+  control = list(trace = 1), # display number of iterations by blocks of 10
+  se = FALSE) # do not compute SE and confidence intervals to reduce computational burden
 ```
 
-On obtient les estimations ci-dessous.
+Inspect results (NA's are produced because we did not compute SE's when we fitted the model):
 ```{r}
-load("res/dynoccloup.RData")
 fm
 ```
 
-Ces estimations sont sur l'échelle logit. Pour aller plus vite, je n'ai pas calculé les SE, d'où les NA dans les sorties du modèle. Le plus important est qu'elles sont proches des estimations obtenues en bayésien pour le papier de Julie.
-
-# Visualisation de l'occupancy
-
-Pour faire une carte annuelle de la probabilité d'occupancy, soit on passe par la probabilité d'occupancy $\psi_{i,t}$, soit on se base directement sur l'occupancy réalisée, c'est-à-dire la variable latente $z_{i,t}$ qui nous dit si la cellule $i$ est occupée l'année $t$ ($z_{i,t} = 1$) ou pas ($z_{i,t} = 0$). On va se baser sur l'occupancy réalisée. Pour ce faire, il nous faut l'estimation des $z$ qu'on obtient dans `unmarked` via des méthodes Bayésiennes empiriques : on estime la distribution a posteriori de la variable latente $z$ avec les données et les estimations du max de vraisemblance obtenue au-dessus. Le mode de la distribution a posteriori est le "empirical best unbiased predictor (EBUP)". 
+Model coefficients are:
 ```{r}
-re <- ranef(fm)
-#confint(re, level = 0.9) # 90% CI
-#z_mean <- bup(re, stat = "mean")           # Posterior mean
-z_mode <- bup(re, stat = "mode")           # Posterior mode
-#head(z_mode)
-#dim(z_mode)
+coef(fm)
+```
+Parameter estimates are given on the logit scale. You may compare them to those obtained by Louvrier and colleagues using a Bayesian approach.
+
+# Map occupancy
+
+There are two ways to map annual occupancy. We may compute the occupancy probability $\psi_{i,t}$, or we rely directly on realized occupancy, that is the latent state $z_{i,t}$ which tells us whether cell $i$ is occupied in year $t$ ($z_{i,t} = 1$) or not ($z_{i,t} = 0$). We go for realized occupancy. To do so, we need the $z$ estimates that we can get in `unmarked` via empirical Bayes methods: The posterior distribution of $z$ is estimated with data and the parameter estimates we obtained from fitting our model above. The mode of the posterior distribution is the "empirical best unbiased predictor (EBUP)". 
+```{r}
+re <- ranef(fm) # estimate posterior distribution of z
+z_mode <- bup(re, stat = "mode") # get mode of posterior distribution
 ```
 
 L'objet `z_mode` contient les $z$ estimés avec en lignes les cellules de la grille et en colonnes les années. Mettons tout ça sur une carte. 
-On charge une carte de la France.
+
+Get a map of France:
 ```{r}
-pays <-  st_read("shp/pays/Country.shp")
+france <-  st_read("shp/pays/Country.shp")
 ```
 
-Puis notre grille complète 10km par 10km. 
+then our 10x10km grid: 
 ```{r}
-grid_rect <- st_read("shp/grille10par10//grille_France.shp") %>% 
-  st_transform(crs= st_crs(pays))
+grid_rect <- st_read("shp/grille10par10/grille_France.shp") %>% 
+  st_transform(crs = st_crs(france))
 ```
 
-On récupère les coordonnées de nos cellules échantillonnées au moins une fois au cours de l'étude. 
+On récupère les coordonnées de nos cellules échantillonnées au moins une fois au cours de l'étude.
 ```{r}
-grid <- ZST[!ind,] %>% 
-  as_tibble() %>% 
+coord <- readRDS("data/coordcells_wolf.rds")
+grid <- coord %>% 
   st_as_sf(coords = c('X','Y'), crs = st_crs(grid_rect))
 ```
 
@@ -232,7 +272,7 @@ grid_rect %>%
   geom_sf(alpha = 0, lwd = 0.01) + 
   geom_sf(data = grid_poly, aes(fill = as_factor(z_mode[,23])), 
           lwd = 0.01) + 
-  geom_sf(data = pays %>% filter(NAME == "France"), alpha = 0) +
+  geom_sf(data = france %>% filter(NAME == "France"), alpha = 0) +
   scale_fill_manual(name = "",
                     values = c("gray90",
                                "steelblue1"),
@@ -253,7 +293,7 @@ occ_plot <- function(year){
   geom_sf(alpha = 0, lwd = 0.01) + 
   geom_sf(data = grid_poly, aes(fill = as_factor(z_mode[,index])), 
           lwd = 0.01) + 
-  geom_sf(data = pays %>% filter(NAME == "France"), alpha = 0) +
+  geom_sf(data = france %>% filter(NAME == "France"), alpha = 0) +
   scale_fill_manual(name = "",
                     values = c("gray90",
                                "steelblue1"),
