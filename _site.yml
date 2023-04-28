@@ -1,5 +1,5 @@
 name: "."
-title: "Estimating wolf occupancy with R."
+title: "Estimating wolf occupancy with R"
 description: |
   occupancy-workshop
 theme: "theme.css"
@@ -12,27 +12,19 @@ navbar:
     - text: "Lectures"
       menu:
         - text: "Introduction"
-          href: slides/introduction.html
-        - text: "Class 1: Population abundance and density"
-          href: slides/abundance.html
-        - text: "Class 2: Demographic parameters"
-          href: slides/survival.html
-        - text: "Class 3: Population projection models"
-          href: slides/matrixmodels.html
-        - text: "Conclusions"
-          href: slides/conclusions.html
+          href: slides/lectures_occupancy.pdf
     - text: "Live demos"
       menu:
-        - text: "Demo 1: Population abundance and density"
-          href: tutorials/abundance-tutorial.html
-        - text: "Demo 2: Demographic parameters"
-          href: tutorials/survival-tutorial.html
-        - text: "Demo 3: Population projection models"
-          href: tutorials/matrix-tutorial.R
-        - text: "All R scripts together"
-          href: tutorials/Rscriptsdemos.R
-    - text: "Datasets"
-      href: tutorials/dat.zip
+        - text: "Practical 1: Static"
+          href: tutorials/practical1-static.html
+        - text: "Practical 2: Dynamic"
+          href: tutorials/practical2-dynamic.html
+        - text: "Practical 3: False positives"
+          href: tutorials/practical3-falsepositives.html
+        - text: "Practical 4: Multispecies"
+          href: tutorials/practical4-multispecies.html
+#    - text: "Datasets"
+#      href: tutorials/dat.zip
     - icon: fab fa-github
       href: https://github.com/oliviergimenez/occupancy-workshop    
 output: distill::distill_article

@@ -1,0 +1,840 @@
+---
+title: "Practical 4: Multispecies"
+author: "Olivier Gimenez"
+output:
+  html_document:
+    highlight: tango
+    number_sections: yes
+    theme: spacelab
+    toc: yes
+    toc_depth: 2
+date: "May 2023"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      dpi = 300, 
+                      fig.height = 6, 
+                      fig.width = 1.777777*6)
+```
+
+# Dapprima selezione delle variabili per ciascuna delle quattro specie
+
+```{r cars, include=FALSE}
+library(chron)
+library(reshape)
+library(vegan)
+library(plotrix)
+library(ggplot2)
+library(maptools)
+library(rgdal)
+library(unmarked)
+library(AICcmodavg)
+library(MuMIn)
+library(plyr)
+library(lattice)  
+library(lattice)
+library(lubridate)
+library(gridExtra)
+library(grid)
+```
+
+
+# Data
+
+Thanks Marco Salvatori.
+
+```{r}
+covar<- read.csv2('data/covs_original_ALL.csv', stringsAsFactors = F)
+dt1<- covar[,c('Sampling.Unit', 'Area', 'CT.sens', 'EL', 'SL', 'Dis')]
+dt1[,4:6] <- apply(X=dt1[,4:6], MARGIN=2, FUN=decostand, method='standardize')
+var<- dt1
+```
+
+
+```{r}
+ll<-readRDS(file = 'data/matrici_complessive.rds')
+```
+
+
+```{r}
+dom1<-ll$domestici
+dom<-ll$domestici
+ibex<-ll$ibex
+leo<-ll$leo
+lupus<-ll$lupo
+```
+
+# Single species
+
+DOMESTICI
+```{r}
+do<- unmarkedFrameOccu(y=dom, siteCovs = var, obsCovs = NULL)
+ib<- unmarkedFrameOccu(y=ibex, siteCovs = var, obsCovs = NULL)
+le<- unmarkedFrameOccu(y=leo, siteCovs = var, obsCovs = NULL)
+lu<- unmarkedFrameOccu(y=lupus, siteCovs = var, obsCovs = NULL)
+
+```
+
+## Bestiame
+
+```{r , include=TRUE}
+##p
+mod0<-occu(~1~Area+EL+SL+Dis ,do)
+mod1<-occu(~Dis~Area+EL+SL+Dis,do)
+mod2<-occu(~CT.sens~Area+EL+SL+Dis,do)
+mod3<-occu(~Dis+CT.sens~Area+EL+SL+Dis, do)
+```
+
+
+```{r , include=TRUE}
+mods<-fitList('Zero'=mod0,'Dis'=mod1,'CT.sens'=mod2, 'Dis+CT.sens'=mod3)
+modSel(mods)
+```
+
+
+```{r , include=TRUE}
+## psi
+mod1<-occu(~Dis+CT.sens~1, do)
+mod2<-occu(~Dis+CT.sens~Area, do)
+mod3<-occu(~Dis+CT.sens~Dis, do)
+mod4<-occu(~Dis+CT.sens~EL, do)
+mod5<-occu(~Dis+CT.sens~SL, do)
+mod6<-occu(~Dis+CT.sens~Area+SL, do)
+mod7<-occu(~Dis+CT.sens~Area+EL, do)
+mod8<-occu(~Dis+CT.sens~Area+Dis, do)
+mod9<-occu(~Dis+CT.sens~EL+Dis, do)
+mod10<-occu(~Dis+CT.sens~EL+SL, do)
+mod11<-occu(~Dis+CT.sens~Dis+SL, do)
+mod12<-occu(~Dis+CT.sens~Area+EL+SL, do)
+mod13<-occu(~Dis+CT.sens~Area+EL+Dis, do)
+mod14<-occu(~Dis+CT.sens~Area+SL+Dis, do)
+mod15<-occu(~Dis+CT.sens~SL+EL+Dis, do)
+mod16<-occu(~Dis+CT.sens~ Area+EL+SL+Dis, do)
+```
+
+
+```{r, include=TRUE}
+mdls<-fitList('Zero'=mod0,'K'=mod1,'Area'=mod2,'Dis'=mod3,
+              'EL'=mod4,'SL'=mod5,'Area+SL'=mod6,'Area+EL'=mod7, 
+              'Area+Dis'=mod8, 'EL+Dis'=mod9, 'EL+SL'=mod10, 'Dis+SL'=mod11,
+              'Area+EL+SL'=mod12, 'Area+EL+Dis'=mod13,  'Area+SL+Dis'=mod14, 
+              'SL+EL+Dis'=mod15, 'Area+EL+SL+Dis'=mod16)
+```
+
+
+```{r, include=TRUE}
+ms<-modSel(mdls)
+```
+
+
+```{r, include=TRUE}
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+```
+
+
+```{r, include=TRUE}
+summary(mod13)
+```
+
+## Stambecco Siberiano
+
+```{r, include=TRUE}
+### p
+
+mod0<-occu(~1~Area+EL+SL+Dis ,ib)
+mod1<-occu(~Dis~Area+EL+SL+Dis,ib)
+mod2<-occu(~CT.sens~Area+EL+SL+Dis,ib)
+mod3<-occu(~Dis+CT.sens~Area+EL+SL+Dis, ib)
+```
+
+
+```{r, include=TRUE}
+mods<-fitList('Zero'=mod0,'Dis'=mod1,'CT.sens'=mod2, 'Dis+CT.sens'=mod3)
+modSel(mods)
+```
+
+
+```{r, include=TRUE}
+## psi
+mod1<-occu(~CT.sens~1, ib)
+mod2<-occu(~CT.sens~Area, ib)
+mod3<-occu(~CT.sens~Dis, ib)
+mod4<-occu(~CT.sens~EL, ib)
+mod5<-occu(~CT.sens~SL, ib)
+mod6<-occu(~CT.sens~Area+SL, ib)
+mod7<-occu(~CT.sens~Area+EL, ib)
+mod8<-occu(~CT.sens~Area+Dis, ib)
+mod9<-occu(~CT.sens~EL+Dis, ib)
+mod10<-occu(~CT.sens~EL+SL, ib)
+mod11<-occu(~CT.sens~Dis+SL, ib)
+mod12<-occu(~CT.sens~Area+EL+SL, ib)
+mod13<-occu(~CT.sens~Area+EL+Dis, ib)
+mod14<-occu(~CT.sens~Area+SL+Dis, ib)
+mod15<-occu(~CT.sens~SL+EL+Dis, ib)
+mod16<-occu(~CT.sens~ Area+EL+SL+Dis, ib)
+```
+
+
+```{r, include=TRUE}
+mdls<-fitList('Zero'=mod0,'K'=mod1,'Area'=mod2,'Dis'=mod3,
+              'EL'=mod4,'SL'=mod5,'Area+SL'=mod6,'Area+EL'=mod7, 
+              'Area+Dis'=mod8, 'EL+Dis'=mod9, 'EL+SL'=mod10, 'Dis+SL'=mod11,
+              'Area+EL+SL'=mod12, 'Area+EL+Dis'=mod13,  'Area+SL+Dis'=mod14, 
+              'SL+EL+Dis'=mod15, 'Area+EL+SL+Dis'=mod16)
+```
+
+
+```{r, include=TRUE}
+ms<-modSel(mdls)
+```
+
+
+```{r, include=TRUE}
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+```
+
+
+```{r, include=TRUE}
+summary(mod12)
+```
+
+## Leopardo delle nevi
+
+```{r, include=TRUE}
+### p
+
+mod0<-occu(~1~Area+EL+SL+Dis ,le)
+mod1<-occu(~Dis~Area+EL+SL+Dis,le)
+mod2<-occu(~CT.sens~Area+EL+SL+Dis,le)
+mod3<-occu(~Dis+CT.sens~Area+EL+SL+Dis, le)
+```
+
+
+```{r, include=TRUE}
+mods<-fitList('Zero'=mod0,'Dis'=mod1,'CT.sens'=mod2, 'Dis+CT.sens'=mod3)#, 'Dis+CT.sens+Area'=mod4 )
+modSel(mods)
+```
+
+
+```{r, include=TRUE}
+## psi
+mod1<-occu(~CT.sens~1, le)
+mod2<-occu(~CT.sens~Area, le, starts = rep(-1,6))
+mod3<-occu(~CT.sens~Dis, le)
+mod4<-occu(~CT.sens~EL, le)
+mod5<-occu(~CT.sens~SL, le)
+mod6<-occu(~CT.sens~Area+SL, le, starts = rep(-1,7))
+mod7<-occu(~CT.sens~Area+EL, le)
+mod8<-occu(~CT.sens~Area+Dis, le, starts = rep(1,7))
+mod9<-occu(~CT.sens~EL+Dis, le)
+mod10<-occu(~CT.sens~EL+SL, le)
+mod11<-occu(~CT.sens~Dis+SL, le)
+mod12<-occu(~CT.sens~Area+EL+SL, le)
+mod13<-occu(~CT.sens~Area+EL+Dis, le, starts = rep(1,8))
+mod14<-occu(~CT.sens~Area+SL+Dis, le, starts = rep(1,8))
+mod15<-occu(~CT.sens~SL+EL+Dis, le)
+mod16<-occu(~CT.sens~ Area+EL+SL+Dis, le)
+```
+
+
+```{r, include=TRUE}
+mdls<-fitList('Zero'=mod0,'K'=mod1,'Area'=mod2,'Dis'=mod3,
+              'EL'=mod4,'SL'=mod5,'Area+SL'=mod6,'Area+EL'=mod7, 
+              'Area+Dis'=mod8, 'EL+Dis'=mod9, 'EL+SL'=mod10, 'Dis+SL'=mod11,
+              'Area+EL+SL'=mod12, 'Area+EL+Dis'=mod13,  'Area+SL+Dis'=mod14, 
+              'SL+EL+Dis'=mod15, 'Area+EL+SL+Dis'=mod16)
+```
+
+
+```{r, include=TRUE}
+ms<-modSel(mdls)
+```
+
+
+```{r, include=TRUE}
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+```
+
+
+```{r, include=TRUE}
+summary(mod2)
+```
+
+## Lupo
+
+```{r, include=TRUE}
+### p
+
+mod0<-occu(~1~Area+EL+SL+Dis ,lu)
+mod1<-occu(~Dis~Area+EL+SL+Dis,lu)
+mod2<-occu(~CT.sens~Area+EL+SL+Dis,lu)
+mod3<-occu(~Dis+CT.sens~Area+EL+SL+Dis, lu)
+```
+
+
+```{r, include=TRUE}
+mods<-fitList('Zero'=mod0,'Dis'=mod1,'CT.sens'=mod2, 'Dis+CT.sens'=mod3)#, 'Dis+CT.sens+Area'=mod4 )
+modSel(mods)
+```
+
+
+```{r, include=TRUE}
+## psi
+mod1<-occu(~1~1, lu)
+mod2<-occu(~1~Area, lu)
+mod3<-occu(~1~Dis, lu)
+mod4<-occu(~1~EL, lu)
+mod5<-occu(~1~SL, lu)
+mod6<-occu(~1~Area+SL, lu)
+mod7<-occu(~1~Area+EL, lu)
+mod8<-occu(~1~Area+Dis, lu)
+mod9<-occu(~1~EL+Dis, lu)
+mod10<-occu(~1~EL+SL, lu)
+mod11<-occu(~1~Dis+SL, lu)
+mod12<-occu(~1~Area+EL+SL, lu)
+mod13<-occu(~1~Area+EL+Dis, lu)
+mod14<-occu(~1~Area+SL+Dis, lu)
+mod15<-occu(~1~SL+EL+Dis, lu)
+mod16<-occu(~1~ Area+EL+SL+Dis, lu)
+```
+
+
+```{r, include=TRUE}
+mdls<-fitList('Zero'=mod0,'K'=mod1,'Area'=mod2,'Dis'=mod3,
+              'EL'=mod4,'SL'=mod5,'Area+SL'=mod6,'Area+EL'=mod7, 
+              'Area+Dis'=mod8, 'EL+Dis'=mod9, 'EL+SL'=mod10, 'Dis+SL'=mod11,
+              'Area+EL+SL'=mod12, 'Area+EL+Dis'=mod13,  'Area+SL+Dis'=mod14, 
+              'SL+EL+Dis'=mod15, 'Area+EL+SL+Dis'=mod16)
+```
+
+
+```{r, include=TRUE}
+ms<-modSel(mdls)
+```
+
+
+```{r, include=TRUE}
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+```
+
+
+```{r, include=TRUE}
+summary(mod9)
+```
+
+## Synthesis
+
+Perciò i migliori modelli di singola specie, selezionando il migliore in termini di AIC, sono i seguenti: 
+```{r, echo=FALSE}
+ta<- data.frame('p'=c('~CT.sens', '~1', '~CT.sens','Distance+CT.sens'), 'psi'=c('~Area', '~Elevation+Distance', '~Area+Elevation+Slope', '~Area+Elevation+Distance'))
+rownames(ta)<-c('leopardo', 'lupo', 'stambecco', 'bestiame')
+ta
+```
+
+## Occupancy di singola specie - grafici
+
+```{r grafici singola specie, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=14}
+
+orig<- covar
+#occupancy
+
+##leo
+modSL<-occu(~CT.sens~Area, le)
+
+lll<-predict(modSL, type='state', newdata=data.frame('Area'=factor(c('SB', 'TB', 'KS', 'SU'), levels =c('KS', 'SB', 'SU', 'TB') ), 'EL'=rep(0,4), 'SL'=rep(0,4), 'Dis'=rep(0,4)))
+lll$Area<- factor(c('SB', 'TB', 'KS', 'SU'), levels=c('SB', 'TB', 'KS', 'SU'))
+sl<- ggplot(data=lll, aes(x=Area, y=Predicted)) +geom_point(aes(x=Area, y=Predicted))+ 
+      geom_errorbar(aes(ymin=lower, ymax=upper), width=0.5)+
+      ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      labs(y='Occupancy', title='Snow leopard')
+
+##lupo
+modW<-occu(~1~EL+Dis, lu)
+wo<- predict(modW, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'EL'=0, 'Dis'=var$Dis, 'SL'=0) )
+wo$Distance <- var$Dis
+
+icaro <- data.frame('Dis.or'=sort(orig$Dis), 'Dis.scaled'=scale(sort(orig$Dis)))
+
+www1<- ggplot(data=wo, aes(x=Distance, y=Predicted)) +geom_line()+ 
+  geom_ribbon(aes(ymin = lower, ymax = upper ), alpha = .15)+
+  ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  labs(y='Occupancy', x='Distance from settlements', title='Wolf')+
+  scale_x_continuous(breaks=seq(min(wo$Dis),max(wo$Dis), length.out = 3),labels=c("5000", "10000", "15000"))
+
+
+wl<- predict(modW, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'Dis'=0, 'EL'=var$EL, 'SL'=0) )
+wl$EL <- var$EL
+
+icaro <- data.frame('EL.or'=sort(orig$EL), 'EL.scaled'=scale(sort(orig$EL)))
+
+www2<- ggplot(data=wl, aes(x=EL, y=Predicted)) +geom_line()+ 
+  geom_ribbon(aes(ymin = lower, ymax = upper ), alpha = .15)+
+  ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  labs(y='Occupancy', x='Elevation')+
+  scale_x_continuous(breaks=seq(min(wl$EL),max(wl$EL), length.out = 5),labels=c("2000", "2400", "2800","3200", "3500"))
+ 
+ #ibex
+
+modIBX<-occu(~CT.sens~Area+EL+SL, ib)
+
+ibe<-predict(modIBX, type='state', newdata=data.frame('Area'=factor(c('SB', 'TB', 'KS', 'SU'), levels =c('KS', 'SB', 'SU', 'TB') ), 'EL'=rep(0,4), 'SL'=rep(0,4), 'Dis'=rep(0,4)))
+ibe$Area<- factor(c('SB', 'TB', 'KS', 'SU'), levels=c('SB', 'TB', 'KS', 'SU'))
+ib1<- ggplot(data=ibe, aes(x=Area, y=Predicted)) +geom_point(aes(x=Area, y=Predicted))+ 
+      geom_errorbar(aes(ymin=lower, ymax=upper), width=0.5)+
+      ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      labs(y='Occupancy', title='Siberian ibex')
+
+
+
+ibe<-predict(modIBX, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'EL'=0, 'Dis'=0, 'SL'=var$SL))#, newdata=data.frame('Area'=factor(rep('KS', 216), levels=c('KS','SB', 'SU', 'TB')), 'EL'=rep(0,216), 'SL'=covs$SL, 'Dis'=rep(0,216)))
+ibe$Slope<- var$SL
+
+ib2<- ggplot(data=ibe, aes(x=Slope, y=Predicted)) +geom_line()+
+  geom_ribbon( aes(ymin = lower, ymax = upper ), alpha = .15)+ 
+    ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    labs(y='Occupancy', x='Slope')+
+    scale_x_continuous(breaks=seq(min(ibe$Slope), max(ibe$Slope), length.out = 5),labels=c("5", "15", "25", '35', '45'))
+
+
+
+ ibe<-predict(modIBX, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'SL'=0, 'Dis'=0, 'EL'=var$EL))#, newdata=data.frame('Area'=factor(rep('KS', 216), levels=c('KS','SB', 'SU', 'TB')), 'EL'=rep(0,216), 'SL'=covs$SL, 'Dis'=rep(0,216)))
+ibe$Elevation<- var$EL
+
+ib3<- ggplot(data=ibe, aes(x=Elevation, y=Predicted)) +geom_line()+
+  geom_ribbon( aes(ymin = lower, ymax = upper ), alpha = .15)+ 
+    ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    labs(y='Occupancy', x='Elevation')+
+    scale_x_continuous(breaks=seq(min(ibe$Elevation), max(ibe$Elevation), length.out = 5),labels=c("2000", "2400", "2800","3200", "3500"))
+
+#orig <- covar
+
+modLIV<-occu(~Dis+CT.sens~Area+EL+Dis, do)
+
+
+
+liv<-predict(modLIV, type='state', newdata=data.frame('Area'=factor(c('SB', 'TB', 'KS', 'SU'), levels =c('KS', 'SB', 'SU', 'TB') ), 'EL'=rep(0,4), 'SL'=rep(0,4), 'Dis'=rep(0,4)))
+liv$Area<- factor(c('SB', 'TB', 'KS', 'SU'), levels=c('SB', 'TB', 'KS', 'SU'))
+live0<- ggplot(data=liv, aes(x=Area, y=Predicted)) +geom_point(aes(x=Area, y=Predicted))+ 
+      geom_errorbar(aes(ymin=lower, ymax=upper), width=0.5)+
+      ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      labs(y='Occupancy', title='Livestock')
+
+
+
+liv<- predict(modLIV, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'EL'=var$EL, 'Dis'=0, 'SL'=0) )
+liv$Elevation <- var$EL
+
+icaro <- data.frame('EL.or'=sort(orig$EL), 'EL.scaled'=scale(sort(orig$EL)))
+
+live1<- ggplot(data=liv, aes(x=Elevation, y=Predicted))+geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper ), alpha = .15)+ 
+  ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  labs(y='Occupancy', x='Elevation')+
+  scale_x_continuous(breaks=c(-2.1,-0.95, 0.3,1.56, 2.5),labels=c("2000", "2400", "2800", '3200', '3500'))
+
+liv2<- predict(modLIV, type='state', newdata= data.frame('Area'=factor(rep('KS', 216), levels = c('KS', 'SB', 'SU', 'TB')), 'EL'=0, 'Dis'=var$Dis, 'SL'=0) )
+liv2$Distance <- var$Dis
+
+icaro <- data.frame('Dis.or'=sort(orig$Dis), 'Dis.scaled'=scale(sort(orig$Dis)))
+
+live2<- ggplot(data=liv2, aes(x=Distance, y=Predicted)) +geom_line()+ 
+  geom_ribbon(aes(ymin = lower, ymax = upper ), alpha = .15)+
+  ylim(0,1)+theme(axis.text=element_text(size=26),text=element_text(size=26), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  labs(y='Occupancy', x='Distance from settlements')+
+  scale_x_continuous(breaks=seq(min(liv2$Distance),max(liv2$Distance), length.out=3),labels=c("5000", "10000", "15000"))
+
+#blank <- grid.rect(gp=gpar(col="white"))
+
+#png('progetto_Mongolia/predizioni_finali/single_species_pred.png', width = 1200, height = 700, units = 'px')
+#gigi<- grid.arrange(sl,www, ib2, live1, blank,blank, blank, live2, nrow=2)
+#print(gigi)
+#dev.off()
+vuoto <- ggplot() + theme_void()
+
+gr<- list(live0, ib1, www1, sl,  live1, ib3, www2, vuoto, live2, ib2)
+#lay<- rbind(c(1,2,3,4), c(5, 6, 7, 8))
+#return(grid.arrange(grobs = gr, layout_matrix = lay))
+grid.arrange(grobs = gr, ncol=4)
+
+```
+
+
+
+# Test delle ipotesi ecologiche di interazione inter-specifica
+
+## Interazione stambecco - bestiame domestico
+
+```{r interazioni1, include=FALSE, warning=FALSE, message=FALSE, }
+dt1<- unmarkedFrameOccuMulti(y=list('domestici'=dom,
+      'ibex'=ibex), siteCovs = var, obsCovs = NULL)
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+dom_ibex_dip <- occuMulti(detformulas = c('~Dis+CT.sens','~CT.sens'), stateformulas = c('~Area+EL+Dis', '~Area+EL+SL', '~1'), data = dt1, control=list(maxit=1000, trace=TRUE, REPORT=1))
+dom_ibex_ind <- occuMulti(detformulas = c('~Dis+CT.sens','~CT.sens'), stateformulas = c('~Area+EL+Dis', '~Area+EL+SL', '~0'), data = dt1, control=list(maxit=1000, trace=TRUE, REPORT=1))
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+library(AICcmodavg)
+modavgShrink(list(dom_ibex_dip, dom_ibex_ind), parm='[domestici:ibex] (Intercept)', parm.type='psi')
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(dom_ibex_dip, dom_ibex_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms1<-msms
+```
+
+Piccola differenza, ma il modello con l'AIC migliore include l'interazione domestici-stambecco.
+
+Modello senza interazione:
+```{r, echo=FALSE}
+summary(dom_ibex_ind)
+```
+
+Modello con interazione:
+```{r, echo=FALSE}
+summary(dom_ibex_dip)
+```
+
+##  Interazione leopardo - bestiame domestico
+
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+dt2<- unmarkedFrameOccuMulti(y=list('domestici'=dom,
+    'leopardo'=leo), siteCovs = var, obsCovs = NULL)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+dom_leo_dip <- occuMulti(detformulas = c('~Dis+CT.sens','~CT.sens'), stateformulas = c('~Area+EL+Dis', '~Area', '~1'), data = dt2, control=list(maxit=1000, trace=TRUE, REPORT=1))
+dom_leo_ind <- occuMulti(detformulas = c('~Dis+CT.sens','~CT.sens'), stateformulas = c('~Area+EL+Dis', '~Area', '~0'), data = dt2, control=list(maxit=1000, trace=TRUE, REPORT=1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(dom_leo_dip, dom_leo_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms2<-msms
+
+```
+
+Il modello migliore per AIC contiene l'interazione domestici-leopardo. 
+
+Modello senza interazione: 
+```{r, echo=FALSE}
+summary(dom_leo_ind)
+```
+Modello con interazione: 
+```{r, echo=FALSE}
+summary(dom_leo_dip)
+```
+
+## Interazione lupo - bestiame domestico
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dt3<- unmarkedFrameOccuMulti(y=list('domestici'=dom, 
+      'lupo'=lupus), siteCovs = var, obsCovs = NULL)
+```
+
+```{r, include=FALSE, warning=FALSE, message=FALSE, results='hide'}
+dom_lup_dip <- occuMulti(detformulas = c('~Dis+CT.sens','~1'), stateformulas = c('~Area+EL+Dis', '~EL+Dis', '~1'), data = dt3, control=list(maxit=1000, trace=TRUE, REPORT=1))
+dom_lup_ind <- occuMulti(detformulas = c('~Dis+CT.sens','~1'), stateformulas = c('~Area+EL+Dis', '~EL+Dis', '~0'), data = dt3, control=list(maxit=1000, trace=TRUE, REPORT=1))
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(dom_lup_dip, dom_lup_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms3<-msms
+
+```
+
+Anche in questo caso il modello con migliore AIC prevede l'interazione. 
+
+Modello senza interazione:
+```{r, echo=FALSE}
+summary(dom_lup_ind)
+```
+
+Modello con interazione: 
+```{r, echo=FALSE}
+summary(dom_lup_dip)
+```
+
+## Interazione leopardo - stambecco
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+dt4<- unmarkedFrameOccuMulti(y=list('ibex'=ibex, 'leopardo'=leo),
+                             siteCovs = var, obsCovs = NULL)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+ib_leo_dip <- occuMulti(detformulas = c('~CT.sens','~CT.sens'), stateformulas = c('~Area+EL+SL', '~Area', '~1'), data = dt4, control=list(maxit=1000, trace=TRUE, REPORT=1))
+ib_leo_ind <- occuMulti(detformulas = c('~CT.sens','~CT.sens'), stateformulas = c('~Area+EL+SL', '~Area', '~0'), data = dt4, control=list(maxit=1000, trace=TRUE, REPORT=1))
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(ib_leo_dip, ib_leo_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms4<-msms
+
+```
+In questo caso il modello con AIC più basso prevede l'interazione.
+Modello senza interazione:
+```{r, echo=FALSE}
+summary(ib_leo_ind)
+```
+Modello con interazione: 
+```{r, echo=FALSE}
+summary(ib_leo_dip)
+```
+## Interazione leopardo - lupo
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+dt5<- unmarkedFrameOccuMulti(y=list( 'leopardo'=leo, 'lupo'=lupus), siteCovs = var, obsCovs = NULL)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+lup_leo_dip <- occuMulti(detformulas = c('~CT.sens','~1'), stateformulas = c( '~Area','~EL+Dis', '~1'), data = dt5, control=list(maxit=1000, trace=TRUE, REPORT=1))
+lup_leo_ind <- occuMulti(detformulas = c('~CT.sens','~1'), stateformulas = c( '~Area','~EL+Dis', '~0'), data = dt5, control=list(maxit=1000, trace=TRUE, REPORT=1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(lup_leo_dip, lup_leo_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms5<-msms
+
+```
+In questo caso il modello più supportato contiene l'interazione. 
+Modello senza interazione:
+```{r, echo=FALSE}
+summary(lup_leo_ind)
+```
+Modello con interazione: 
+```{r, echo=FALSE}
+summary(lup_leo_dip)
+```
+
+## Interazione stambecco - lupo
+```{r interazioni2, include=FALSE, warning=FALSE, message=FALSE, }
+dt1<- unmarkedFrameOccuMulti(y=list('lupo'=lupus,
+      'ibex'=ibex), siteCovs = var, obsCovs = NULL)
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+lup_ibex_dip <- occuMulti(detformulas = c('~1','~CT.sens'), stateformulas = c('~EL+Dis', '~Area+EL+SL', '~1'), data = dt1, control=list(maxit=1000, trace=TRUE, REPORT=1))
+lup_ibex_ind <- occuMulti(detformulas = c('~1','~CT.sens'), stateformulas = c('~EL+Dis', '~Area+EL+SL', '~0'), data = dt1, control=list(maxit=1000, trace=TRUE, REPORT=1))
+``` 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mado<- fitList(lup_ibex_dip, lup_ibex_ind)
+ms<-modSel(mado)
+msms<- ms@Full[,c('model', 'negLogLike', 'nPars', 'AIC', 'delta', 'AICwt')]
+msms
+ms6<-msms
+
+```
+In questo caso il modello più supportato non contiene l'interazione. 
+Modello senza interazione:
+```{r, echo=FALSE}
+summary(lup_ibex_ind)
+```
+```{r, echo=FALSE}
+summary(lup_ibex_dip)
+```
+
+##Selezione dei modelli multispecie, a coppie, testando l'ipotesi di interazione
+```{r, echo=FALSE}
+
+mdsl<- do.call('rbind', list(ms1, ms2, ms3, ms4, ms5, ms6))
+mdsl
+write.csv2(mdsl, 'res/multi-specie-selezione-modelli.csv')
+```
+
+## Riassunto grafico della selezione dei modelli per le interazioni inter-specifiche
+
+```{r, echo=FALSE, results='hide', fig.cap= 'Estimates for pairwise co-occurrence probabilities. Error bars show 95% confidence interval. Light blue indicates pairwise interactions supported by AIC, while orange indicates non supported pairwise interactions.'}
+m1<-summary(dom_ibex_dip)
+m2<-summary(dom_leo_dip)
+m3<-summary(dom_lup_dip)
+m4<-summary(ib_leo_dip)
+m5<-summary(lup_leo_dip)
+m6<- summary(lup_ibex_dip)
+
+dfdf<- data.frame('Interaction'=factor(c('ibex-livestock', 'leopard-livestock', 'wolf-livestock', 'ibex-leopard', 'wolf-leopard', 'wolf-ibex'), levels=c('ibex-livestock', 'leopard-livestock', 'wolf-livestock', 'ibex-leopard', 'wolf-leopard', 'wolf-ibex')), 'Estimate'=c(tail(m1$state$Estimate, 1),tail(m2$state$Estimate, 1),tail(m3$state$Estimate, 1),tail(m4$state$Estimate, 1),tail(m5$state$Estimate, 1),tail(m6$state$Estimate, 1)), 'SE'= c(tail(m1$state$SE, 1),tail(m2$state$SE, 1),tail(m3$state$SE, 1),tail(m4$state$SE, 1),tail(m5$state$SE, 1),tail(m6$state$SE, 1)), 'Supported interaction'=c('YES', 'YES', 'YES', 'YES', 'YES', 'YES'))
+ggplot(dfdf, aes(x=Interaction, y=Estimate)) + 
+geom_pointrange(aes(ymin=Estimate-1.96*SE, ymax=Estimate+1.96*SE), size=1.35, alpha=1.7)+ geom_hline(yintercept=0, linetype="dashed", color = "red", size=1.1) +theme(panel.grid.major.x = element_blank(), panel.grid.minor.y = element_blank(),text = element_text(size=27) ) + xlab('\nPairwise co-occurrence')+ scale_x_discrete(labels=c('ibex \n livestock', 'leopard \n livestock', 'wolf \n livestock', 'ibex \n leopard', 'wolf \n leopard', 'wolf \n ibex'))
+
+ ggplot(dfdf, aes(x=Interaction, y=Estimate)) + 
+geom_pointrange(aes(ymin=Estimate-1.96*SE, ymax=Estimate+1.96*SE), size=1.35, alpha=1.7)+ geom_hline(yintercept=0, linetype="dashed", color = "red", size=1.1) +theme(panel.grid.major.x = element_blank(), panel.grid.minor.y = element_blank(),text = element_text(size=27) ) + xlab('Pairwise co-occurrence')
+```
+
+### predizioni multi-species
+```{r lattice graph, echo=FALSE}
+############## lattice graph gra(n)fico #########
+
+panel.mn <- function(x,y,box.width=.5,horiz=FALSE,...){
+    panel.bwplot(x,y,box.width,horiz=horiz,...)
+    y <- tapply(y,x,mean,na.rm=TRUE)
+    x <- seq_along(y)
+    panel.segments(x0=x-box.width/2,x1=x+box.width/2,
+                   y0 = y,y1=y,...)
+}
+
+fit <- dom_leo_dip
+
+z01<-predict(fit, type='state',species='leopardo', cond='-domestici', newdata= var)
+z01$speciesB<-'Livestock'
+z01$cond<-'A'
+
+z02<-predict(fit, type='state',species='leopardo', cond='domestici', newdata= var)
+z02$speciesB<-'Livestock'
+z02$cond<-'P'
+
+fit <- lup_leo_dip
+
+
+z1<-predict(fit, type='state',species='leopardo', cond='-lupo', newdata= var)
+z1$speciesB<-'Wolf'
+z1$cond<-'A'
+
+z2<-predict(fit, type='state',species='leopardo', cond='lupo', newdata= var)
+z2$speciesB<-'Wolf'
+z2$cond<-'P'
+
+fit<- ib_leo_dip
+
+z3<-predict(fit, type='state',species='leopardo', cond='-ibex', newdata= var)
+z3$speciesB<-'Siberian ibex'
+z3$cond<-'A'
+
+z4<-predict(fit, type='state',species='leopardo', cond='ibex', newdata= var)
+z4$speciesB<-'Siberian ibex'
+z4$cond<-'P'
+
+zz<- do.call('rbind', list(z01, z02, z1, z2, z3, z4))
+
+p1<-bwplot(Predicted ~ cond | speciesB,  data = zz,
+           layout = c(3, 1),par.settings = list(strip.background = list(col = "transparent")),panel = panel.mn,
+           xlab = "", ylab = list("Occurrence probability", cex=2), scales=list(cex=1.7), par.strip.text=list(cex=2) ,
+           ylim = c(0,1) , main=list('Snow leopard', cex=2.2, just=c(2.125,1)))
+
+######## wolf ###############
+
+fit<- dom_lup_dip 
+  
+z01<-predict(fit, type='state',species='lupo', cond='-domestici', newdata= var)
+z01$speciesB<-'Livestock'
+z01$cond<-'A'
+
+z02<-predict(fit, type='state',species='lupo', cond='domestici', newdata= var)
+z02$speciesB<-'Livestock'
+z02$cond<-'P'
+
+fit<- lup_leo_dip
+
+z1<-predict(fit, type='state',species='lupo', cond='-leopardo', newdata= var)
+z1$speciesB<-'Snow leopard'
+z1$cond<-'A'
+
+z2<-predict(fit, type='state',species='lupo', cond='leopardo', newdata= var)
+z2$speciesB<-'Snow leopard'
+z2$cond<-'P'
+
+fit<- lup_ibex_dip
+
+z3<-predict(fit, type='state',species='lupo', cond='-ibex', newdata= var)
+z3$speciesB<-'Siberian ibex'
+z3$cond<-'A'
+
+z4<-predict(fit, type='state',species='lupo', cond='ibex', newdata= var)
+z4$speciesB<-'Siberian ibex'
+z4$cond<-'P'
+
+zz2<- do.call('rbind', list(z01, z02, z1, z2, z3, z4))
+
+
+
+p2<-bwplot(Predicted ~ cond | speciesB,  data = zz2,
+           layout = c(3, 1),par.settings = list(strip.background = list(col = "transparent")),
+           xlab = "", ylab = list("Occurrence probability", cex=2), scales=list(cex=1.7), par.strip.text=list(cex=2) ,panel = panel.mn,
+           ylim = c(0,1) , main=list('Wolf', cex=2.2, just=c(6.25,1)))
+## ibex ###
+fit<- dom_ibex_dip
+
+z01<-predict(fit, type='state',species='ibex', cond='-domestici', newdata= var)
+z01$speciesB<-'Livestock'
+z01$cond<-'A'
+
+z02<-predict(fit, type='state',species='ibex', cond='domestici', newdata= var)
+z02$speciesB<-'Livestock'
+z02$cond<-'P'
+
+fit<- ib_leo_dip
+  
+z1<-predict(fit, type='state',species='ibex', cond='-leopardo', newdata= var)
+z1$speciesB<-'Snow leopard'
+z1$cond<-'A'
+
+z2<-predict(fit, type='state',species='ibex', cond='leopardo', newdata= var)
+z2$speciesB<-'Snow leopard'
+z2$cond<-'P'
+
+fit<- lup_ibex_dip
+
+z3<-predict(fit, type='state',species='ibex', cond='-lupo', newdata= var)
+z3$speciesB<-'Wolf'
+z3$cond<-'A'
+
+z4<-predict(fit, type='state',species='ibex', cond='lupo', newdata= var)
+z4$speciesB<-'Wolf'
+z4$cond<-'P'
+
+zz3<- do.call('rbind', list(z01, z02, z1, z2, z3, z4))
+
+
+p3<-bwplot(Predicted ~ cond | speciesB,  data = zz3,
+           layout = c(3, 1),par.settings = list(strip.background = list(col = "transparent")),
+           xlab = "", ylab = list("Occurrence probability", cex=2), scales=list(cex=1.7), par.strip.text=list(cex=2) ,panel = panel.mn,
+           ylim = c(0,1) , main=list('Siberian ibex', cex=2.2, just=c(2.25,1)))
+
+require(gridExtra)
+grid.arrange(p1, p2, p3, nrow=3)
+
+```
+```{r echo = FALSE}
+spp<- list(modLIV, modIBX, modSL, modW)
+lalla<- list()
+for(i in 1:4){
+prete <- predict(spp[[i]], type='state')
+prete$Area<- var$Area
+pre<-split(prete, f=prete$Area)
+summarystat<- function(x) {
+  z1 <- mean(x$Predicted, na.rm = TRUE)
+  z2 <- mean(x$SE, na.rm=TRUE)
+  z3<-sd(x$Predicted,na.rm = TRUE)
+
+  return(c(mean=z1,standard_dev=z3, SE=z2))
+}
+lalla[[i]]<-lapply(pre, function(x) (summarystat(x) ))
+}
+names(lalla)<-c('Livestock', 'Ibex', 'Snow-leopard', 'Wolf')
+lalla
+
+```
