@@ -20,226 +20,295 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.width = 1.777777*6)
 ```
 
-# Misc
+# Objectives
 
++ Fit static (single-season) occupancy models
++ Deal with covariates
++ Carry out model selection
+
+# Pre-requisites
+
+Load some packages:
 ```{r}
-library(tidyverse)
-library(sf)
-theme_set(theme_light(base_size = 16))
-set.seed(1234)
+library(tidyverse) # manipulate and visulaize data
+theme_set(theme_light(base_size = 16)) # set theme for visualisation and font size
+library(unmarked) # occupancy modelling
 ```
 
+# Data
 
-# Occupancy loup en 2013
+We use data from *Mapping and explaining wolf recolonization in France using dynamic occupancy models and opportunistic data* by Louvrier et al. in Ecography available at <https://onlinelibrary.wiley.com/doi/abs/10.1111/ecog.02874>. We use the year 2013 for illustration. Occasions are months December, January, February and March. A 100km$^2$ grid was overlaid over France and detections and non-detections were collected from sign data. See paper for more details. 
 
-## Lecture des données
+## Read in data
 
-On commence par lire les données.
+Read in data:
 ```{r}
-wolf_data <- read_csv("data/wolf_occupancy.csv") 
+wolf_data <- read_csv("data/wolf_occupancy.csv")
+```
+
+Inspect data. The column names are self-explanatory. Note that covariates effort (number of observers in a given cell), altitude and forest were standardized. 
+```{r}
 wolf_data
 ```
 
-Remplace les 2 (incertains) par des 1.
+There are > 3000 cells. 
 ```{r}
-mask <- (wolf_data[, 2:5] == 2)
-wolf_data[, 2:5][mask] <- 1
+nrow(wolf_data)
 ```
 
+## Format data
 
-## Prépation des données
-
-On charge le package `unmarked`.
+We pick the detections and non-detections, and format them for use in `unmarked`:
 ```{r}
-library(unmarked)
+y <- wolf_data[,2:5]
+wolf <- unmarkedFrameOccu(y = y)
 ```
 
-On crée le jeu de données. 
+Inspect:
 ```{r}
-loup <- unmarkedFrameOccu(y = wolf_data %>% select(occ1:occ4))
+head(wolf)
 ```
 
-Un coup d'oeil.
+Summarise data:
 ```{r}
-head(loup)
+summary(wolf)
 ```
 
-Résumé des données.
+Visualize:
 ```{r}
-summary(loup)
+plot(wolf)
 ```
 
-Et visuellement?
+# Model with constant parameters
+
+Fit a model with constant parameters, detection first, then occupancy:
 ```{r}
-plot(loup)
+fm <- occu(~ 1 ~ 1, data = wolf)
 ```
 
-## Mon premier modèle d'occupancy 
-
-Aide de la fonction `occu`.
-```{r}
-?occu
-```
-
-On spécifie la détection d'abord, puis l'occupancy. Ici ces paramètres sont constants. 
-```{r}
-fm <- occu(~ 1 ~ 1, loup)
-```
-
-Les estimations sont sur l'échelle logit.
+Inspect results:
 ```{r}
 fm
 ```
 
-On les back-transforme, c'est-à-dire qu'on obtient les estimations des probabilités entre 0 et 1.
+Parameter estimates are on the logit scale. We need to back-transform them on their natural scale, ie between 0 and 1. There are several ways to do just that. 
+
+First, inspect model coefficients:
+```{r}
+coef(fm)
+```
+
+Get occupancy on logit scale, then back-transform it:
+```{r}
+logit_occupancy <- coef(fm)[1]
+occupancy <- 1 / (1 + exp(-logit_occupancy))
+occupancy
+```
+
+Idem for detection, note that we use the inverse logit function native to R:
+```{r}
+logit_det <- coef(fm)[2]
+detection <- plogis(logit_det)
+detection
+```
+
+Alternatively, you may use the `unmarked` function `backTransform`:
 ```{r}
 backTransform(fm, type ='state')
 backTransform(fm, type ='det')
+```
 
+And to get confidence intervals:
+```{r}
 confint(backTransform(fm, type='state'))
 confint(backTransform(fm, type='det'))
 ```
 
-## Et les covariables?
+# Deal with covariates
 
-Ajoutons l'effort de prospection sur la détection, et la couverture forestière sur l'occupancy.
+## Site-level covariates
 
-On refait le jeu de données.
+Here we consider site-level covariates, which do not change between visits. 
+
+Let's fit another model with detection as a function of effort, and occupancy as a function of forest cover. We need to recreate a dataset that includes these covariates, with one column per covariate:
 ```{r}
-site.covs <- data.frame(effort = wolf_data %>% select(effort),
-                        foret = wolf_data %>% select(foret))
-loup <- unmarkedFrameOccu(y = wolf_data %>% select(occ1:occ4),
+site.covs <- data.frame(effort = wolf_data$effort,
+                        forest = wolf_data$foret)
+wolf <- unmarkedFrameOccu(y = y,
                           siteCovs = site.covs)
 ```
 
-Données?
+Summarise:
 ```{r}
-summary(loup)
+summary(wolf)
 ```
 
-On ajuste modèle.
+Fit the model:
 ```{r}
-fm1 <- occu(~ effort ~ foret, loup)
+fm1 <- occu(~ effort ~ forest, data = wolf)
 ```
 
-Les estimations.
+Inspect results:
 ```{r}
 fm1
 ```
 
-Visualise.
-```{r echo = FALSE}
-effort <- seq(min(site.covs$effort), 
+Now we'd like to plot the occupancy probabilty estimates as a function of forest cover, and detection probability estimates as a function of effort. 
+
+First we create a grid of values for both covariates:
+```{r}
+effort_grid <- seq(min(site.covs$effort), 
              max(site.covs$effort), 
              length = 50)
-det_pred <- plogis(coef(fm1)[3] + coef(fm1)[4] * effort)
-foret <- seq(min(site.covs$foret), 
-             max(site.covs$foret), 
+forest_grid <- seq(min(site.covs$forest), 
+             max(site.covs$forest), 
              length = 50)
-occ_pred <- plogis(coef(fm1)[1] + coef(fm1)[2] * foret)
+```
+
+Then we predict detection and occupancy probabilities using the parameter estimates:
+```{r}
+det_pred <- plogis(coef(fm1)[3] + coef(fm1)[4] * effort_grid)
+occ_pred <- plogis(coef(fm1)[1] + coef(fm1)[2] * forest_grid)
+```
+
+Note that you can obtain the same result with function `predict`. E.g. let's consider detection:
+```{r eval = FALSE}
+effort <- effort_grid
+predict(fm1, type = "det", as.data.frame(effort))
+```
+
+For occupancy, you would use:
+```{r eval = FALSE}
+forest <- forest_grid
+predict(fm1, type = "state", as.data.frame(forest))
+```
+
+Now we can visualise both relationships:
+```{r}
 par(mfrow = c(1,2))
-plot(foret, 
+plot(forest_grid, 
      occ_pred, 
      type = "l", 
      lwd = 3, 
-     xlab = "couverture forestière", 
-     ylab = "probabilité estimée d'occupancy")
-plot(effort, 
+     xlab = "forest cover", 
+     ylab = "estimated occupancy prob")
+plot(effort_grid, 
      det_pred, 
      type = "l", 
      lwd = 3, 
      xlab = "effort", 
-     ylab = "probabilité estimée de détection")
+     ylab = "estimated detection prob")
 ```
 
-Il s'agit de variables qui dépendent uniquement du site. Et si on voulait mettre un effet du temps sur la détection?
+## Observation-level covariates
 
-On crée une variable pour l'effet du temps.
+We now consider for the observation-level covariates, which can change between visits. Each covariate is its own data.frame with rows as sites and columns as repeat visits.
+
+Let's create a data.frame for a time covariate which we will use to assess the effect of temporal variation on detection:
 ```{r}
-temps <- matrix(c('tps 1','tps 2','tps 3', 'tps 4'),
-              nrow = nrow(loup@y),
-              ncol = ncol(loup@y), 
+time <- matrix(c('visit 1','visit 2','visit 3', 'visit 4'),
+              nrow = nrow(wolf@y),
+              ncol = ncol(wolf@y), 
               byrow = TRUE)
 ```
 
-On refait le jeu de données.
+Inspect:
 ```{r}
-loup <- unmarkedFrameOccu(y = wolf_data %>% select(occ1:occ4),
-                            siteCovs = site.covs,
-                            obsCovs = list(temps = temps))
+head(time)
 ```
 
-Données?
+We recreate our dataset with this new covariate:
 ```{r}
-summary(loup)
+wolf <- unmarkedFrameOccu(y = y, # detection/non-detection data
+                          siteCovs = site.covs, # site-level cov (effort and forest)
+                          obsCovs = list(time = time)) # obs-level cov (time)
 ```
 
-Ajuste le modèle avec effet temps sur la détection.
+Summarize:
 ```{r}
-fm2 <- occu(~ effort + temps ~ foret, loup)
+summary(wolf)
 ```
 
-On affiche les résultats.
+Fit the model with an additive effect of effort and time on detection, and the effect of forest cover on occupancy:
+```{r}
+fm2 <- occu(~ effort + time ~ forest, wolf)
+```
+
+Inspect results:
 ```{r}
 fm2
 ```
 
-L'effet de la forêt est le même qu'on considère un effet du temps sur la détection ou pas. On visualise les effets de l'effort et du temps sur la détection. 
-```{r echo = FALSE}
-# en fonction du temps, pour effort moyen
-nd <- data.frame(effort = mean(site.covs$effort),
-                 temps <- c('tps 1','tps 2','tps 3', 'tps 4'))
-det_pred1 <- predict(fm2, type = "det", nd)
-# en fonction de l'effort
-effort <- seq(min(site.covs$effort), 
+The parameter estimates of the relationship between occupancy probability and forest cover are similar to those obtained with a model without the time effect on detection. 
+
+Now let's plot the effect of effort and time on detection. To do so, we may represent detection as a function of time for an average effort (which is 0 here because effort is standardised), or detection as a function of effort for the 4 visits.
+
+Let us focus on detection as a function of effort for the 4 visits. First we create a grid of values for effort, and consider all combinations of values of effort and visits (1, 2, 3 or 4):
+```{r}
+effort_grid <- seq(min(site.covs$effort), 
              max(site.covs$effort), 
              length = 50)
-temps <- c('tps 1','tps 2','tps 3', 'tps 4')
-grid <- expand_grid(effort, temps)
-det_pred2 <- predict(fm2, type = "det", as.data.frame(grid))
-plot(effort, 
-     det_pred2[grid$temps == "tps 1", 1],
+time <- c('visit 1', 'visit 2', 'visit 3', 'visit 4')
+grid <- expand_grid(effort = effort_grid, time = time)
+```
+
+Get estimates of detection probability:
+```{r}
+det_pred <- predict(fm2, type = "det", as.data.frame(grid))
+```
+
+Get vector or predicted values:
+```{r}
+pred <- det_pred$Predicted
+```
+
+Visualize:
+```{r}
+plot(effort_grid, 
+     pred[grid$time == "visit 1"],
      type = "l", 
      lwd = 3, 
      xlab = "effort", 
-     ylab = "probabilité estimée de détection",
+     ylab = "estimated probability of detection",
      ylim = c(0,1))
-lines(effort, 
-      det_pred2[grid$temps == "tps 2", 1],
+lines(effort_grid, 
+      pred[grid$time == "visit 2"],
       lwd = 3,
       col = "blue")
-lines(effort, 
-      det_pred2[grid$temps == "tps 3", 1],
+lines(effort_grid, 
+      pred[grid$time == "visit 3"],
       lwd = 3,
       col = "pink")
-lines(effort, 
-      det_pred2[grid$temps == "tps 4", 1],
+lines(effort_grid, 
+      pred[grid$time == "visit 4"],
       lwd = 3,
       col = "green")
 legend("topleft", 
        col = c("black", "blue", "pink", "green"), 
        lwd = 3, 
-       legend = c("décembre", "janvier", "février", "mars"))
+       legend = c("december", "january", "february", "march"))
 ```
 
 
-## Sélection de modèles
+# Model selection
 
-On refait tourner les 3 modèles avec le même jeu de données.
+We fitted 3 models, and we'd like to ask the question, which one is the best supported by the data. To do so, we use the AIC. 
+
+First we re-run our 3 models using the same dataset (`unmarked` will throw us an error message otherwise): 
 ```{r}
-fm <- occu(~ 1 ~ 1, loup)
-fm1 <- occu(~ effort ~ foret, loup)
-fm2 <- occu(~ effort + temps ~ foret, loup)
+fm <- occu(~ 1 ~ 1, wolf)
+fm1 <- occu(~ effort ~ forest, wolf)
+fm2 <- occu(~ effort + time ~ forest, wolf)
 ```
 
-On rassemble nos 3 modèles.
+Second, we gather our 3 models in a list:
 ```{r}
 fmList <- fitList('{psi, p}' = fm, 
-                  '{psi(foret), p(effort)}' = fm1, 
-                  '{psi(foret), p(effort + temps)}' = fm2)
+                  '{psi(forest), p(effort)}' = fm1, 
+                  '{psi(forest), p(effort + time)}' = fm2)
 ```
 
-Les AIC.
+Last, we get a table with AIC values for each model:
 ```{r}
 modSel(fmList)
 ```

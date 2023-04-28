@@ -22,13 +22,13 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Objectives
 
-Reproduce analyses in *Determining Occurrence Dynamics when False Positives Occur: Estimating the Range Dynamics of Wolves from Public Survey Data* by Miller et al. in Plos One. 
-
-https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0065808
+Reproduce analyses in *Determining Occurrence Dynamics when False Positives Occur: Estimating the Range Dynamics of Wolves from Public Survey Data* by Miller et al. in Plos One available at <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0065808>.
 
 Includes 2 data types - data from hunters who report whether they observed wolves while hunting for deer or elk. Other data comes from observations made by state agency personnel based on collaring and relocation by radio telemetry. Covariates include the amount of hunter effort, habitat quality, and whether observations were by hunters or agency personnel. Static analysis only uses data from the final year - 2010
 
 Thanks David Miller. 
+
+# Pre-requisites
 
 ```{r}
 library(unmarked)
