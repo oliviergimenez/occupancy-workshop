@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 Load some packages:
 ```{r}
-library(tidyverse) # manipulate and visulaize data
+library(tidyverse) # manipulate and visualize data
 theme_set(theme_light(base_size = 16)) # set theme for visualisation and font size
 library(unmarked) # occupancy modelling
 library(sf) # spatial dataviz
@@ -38,7 +38,7 @@ library(sf) # spatial dataviz
 
 # Data
 
-We use data from *Mapping and explaining wolf recolonization in France using dynamic occupancy models and opportunistic data* by Louvrier et al. in Ecography available at <https://onlinelibrary.wiley.com/doi/abs/10.1111/ecog.02874>. Data were collected between 1994 and 2017 (23 years or primary occasion). Occasions are months December, January, February and March (4 visits or secondary occasions). A 100km$^2$ grid was overlaid over France and detections and non-detections were collected. See paper for more details. 
+We use data from *Mapping and explaining wolf recolonization in France using dynamic occupancy models and opportunistic data* by Louvrier et al. in Ecography available at <https://onlinelibrary.wiley.com/doi/abs/10.1111/ecog.02874>. Detections and non-detections data were collected between 1994 and 2017 (23 years or primary occasions). Occasions are months December, January, February and March (4 visits or secondary occasions). A 100km$^2$ grid was overlaid over France, and cells were considered as sites. See paper for more details. 
 
 ## Read in data
 
@@ -48,9 +48,9 @@ y <- readRDS("data/wolf_louvrier.rds")
 dim(y)
 ```
 
-There are > 3000 cells in row. In columns we have 23 years * 4 visits, arranged in visits within year format, that is visit 1 to visit 4 for year 1994 in the first four columns, then visit 1 to visit 4 for year 1995, and so on.
+There are > 3000 cells in rows. In columns we have 23 years times 4 visits, arranged in visits within years: Visit 1 to visit 4 for year 1994 in the first four columns, then visit 1 to visit 4 for year 1995, and so on.
 
-Now read in some covariates data. First the survey effort which is (approx) the number of observers per cell:  
+Now we read in some covariates. First the survey effort which is (more or less) the number of observers per cell:  
 ```{r}
 effort <- readRDS("data/effort_louvrier.rds")
 ```
@@ -65,18 +65,55 @@ We have some environmental covariates as well, all site-level covariates:
 envcov <- readRDS("data/envcov_louvrier.rds")
 ```
 
-The 7 covariates are specifically in column: farmland cover, altitude, distance to closest barrier, road density, forest cover, high altitude, rock cover:
+The 7 covariates are specifically in columns: farmland cover, altitude, distance to closest barrier, road density, forest cover, high altitude, rock cover:
 ```{r}
 colnames(envcov)
 ```
 
-Last, we have two additional yearly site-level covariates which capture dispersal abilities of wolves, namely the number of occupied neighboring cells at short (10km) and long (150km) distance:
+Last, we have two additional yearly site-level covariates which capture dispersal abilities of wolves, namely the number of occupied neighboring cells at short (10km) and long (150km) distances:
 ```{r}
 # short distance
 SDAC <- readRDS("data/shortd_spatialautocorr.rds")
 # long distance 
 LDAC <- readRDS("data/longd_spatialautocorr.rds")
 ```
+
+There are other yearly site-level covariates we'd like to consider. First a year effect: 
+```{r}
+year <- matrix(rep(c('01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'),nrow(y)), 
+               nrow = nrow(y), 
+               ncol = 23, 
+               byrow = TRUE)
+head(year)
+```
+
+And a linear trend over time:
+```{r}
+trendyear <- matrix(rep(1:23,nrow(y)), 
+                    nrow=nrow(y),
+                    ncol=23, 
+                    byrow=TRUE)
+head(trendyear)
+```
+
+These two covariates differ in the way we treat the year effect, either as a factor or a numeric variables. 
+
+Last, we'll need a covariate to assess a visit (or a month) effect, that varies by sites, visits and years, usually referred to as 'survey-covariate' or 'observation covariate':
+```{r}
+occ <- array(0,c(3450,4,23))
+for (i in 1:3450){
+	for (j in 1:23){
+		occ[i,1:4,j] <- c('1','2','3','4') # dec, jan, feb, mar
+		if (effort[i,j] == 0) occ[i,1:4,j] <- NA
+				}
+	}
+occbis <- occ[,,1]
+for (i in 2:23){
+	occbis <- cbind(occbis,occ[,,i])
+}
+tail(occbis) # 3450 x 92 ou 92 est 4 occ x 23 ans
+```
+
 
 ## Format data
 
@@ -92,24 +129,6 @@ sites.covs <- data.frame(
   acc = envcov[,"p_road"]) # road density
 ```
 
-On rassemble les covariables dont les valeurs diffèrent selon la cellule et l'année.
-```{r}
-year <- matrix(rep(c('01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'),nrow(y)), 
-               nrow = nrow(y), 
-               ncol = 23, 
-               byrow = TRUE)
-head(year)
-```
-
-
-```{r}
-trendyear <- matrix(rep(1:23,nrow(y)), 
-                    nrow=nrow(y),
-                    ncol=23, 
-                    byrow=TRUE)
-head(trendyear)
-```
-
 Yearly site-level covariates:
 ```{r}
 yearly.site.covs <- list(
@@ -120,24 +139,12 @@ yearly.site.covs <- list(
   LDAC = LDAC) # long distance
 ```
 
-On rassemble les covariables dont les valeurs diffèrent selon les occasions secondaires.
+Observation covariates:
 ```{r}
-occ <- array(0,c(3450,4,23))
-for (i in 1:3450){
-	for (j in 1:23){
-		occ[i,1:4,j] <- c('1','2','3','4') # dec, jan, feb, mar
-		if (effort[i,j] == 0) occ[i,1:4,j] <- NA
-				}
-	}
-occbis <- occ[,,1]
-for (i in 2:23){
-	occbis <- cbind(occbis,occ[,,i])
-}
-dim(occbis) # 3450 x 92 ou 92 est 4 occ x 23 ans
 obs.covs <- list(OCC = occbis)
 ```
 
-Organise detection/non-detection data and covariates in `data.frame` that can be used by `unmarked`: 
+Organise detection/non-detection data and covariates in a `data.frame` that can be used by `unmarked`: 
 ```{r}
 umf <- unmarkedMultFrame(y = y, 
                          siteCovs = sites.covs,
@@ -229,7 +236,8 @@ Model coefficients are:
 ```{r}
 coef(fm)
 ```
-Parameter estimates are given on the logit scale. You may compare them to those obtained by Louvrier and colleagues using a Bayesian approach.
+
+Parameter estimates are given on the logit scale. You may compare these values to those obtained by Louvrier and colleagues using a Bayesian approach (see supplementary material).
 
 # Map occupancy
 
@@ -239,79 +247,46 @@ re <- ranef(fm) # estimate posterior distribution of z
 z_mode <- bup(re, stat = "mode") # get mode of posterior distribution
 ```
 
-L'objet `z_mode` contient les $z$ estimés avec en lignes les cellules de la grille et en colonnes les années. Mettons tout ça sur une carte. 
+The `z_mode` object contains the estimated $z$ with cells in rows and years in columns. 
 
 Get a map of France:
 ```{r}
-france <-  st_read("shp/pays/Country.shp")
+all_countries <-  st_read("shp/pays/Country.shp")
+france <- all_countries %>% filter(NAME == "France")
 ```
 
-then our 10x10km grid: 
+Then our 10x10km grid: 
 ```{r}
 grid_rect <- st_read("shp/grille10par10/grille_France.shp") %>% 
   st_transform(crs = st_crs(france))
 ```
-
-On récupère les coordonnées de nos cellules échantillonnées au moins une fois au cours de l'étude.
+Get the coordinates of the cells:
 ```{r}
 coord <- readRDS("data/coordcells_wolf.rds")
 grid <- coord %>% 
   st_as_sf(coords = c('X','Y'), crs = st_crs(grid_rect))
 ```
 
-L'objet `grid` ainsi créé est un objet spatial `sf` de type `POINT`, il me faudrait plutôt des `POLYGONS` pour les représenter en couleur sur la grille. 
+The `grid` object is spatial `sf` object of type `POINT`. We need `POLYGONS` instead: 
 ```{r}
 grid_poly <- st_join(grid_rect, grid, join = st_covers)
 grid_poly <- grid_poly[!is.na(grid_poly$id),]
 ```
 
-Enfin, une carte ! On prend l'année 2017 la plus récente dans le jeu de données. 
+We're ready to map occupancy! Let's focus on the last year for illustration, that is 2017: 
 ```{r}
 grid_rect %>% 
   ggplot() + 
-  geom_sf(alpha = 0, lwd = 0.01) + 
-  geom_sf(data = grid_poly, aes(fill = as_factor(z_mode[,23])), 
+  geom_sf(alpha = 0, 
           lwd = 0.01) + 
-  geom_sf(data = france %>% filter(NAME == "France"), alpha = 0) +
+  geom_sf(data = grid_poly, 
+          aes(fill = as_factor(z_mode[,23])),
+          lwd = 0.01) + 
+  geom_sf(data = france, alpha = 0) +
   scale_fill_manual(name = "",
                     values = c("gray90",
                                "steelblue1"),
-                    labels = c("cellule non-occupée", 
-                               "cellule occupée")) +
-  labs(title = "Carte de l'occupancy du loup en 2017",
-       subtitle = "Données réseau loup")
-```
-
-Construisons une fonction qui fait la carte de l'occupancy pour une année quelconque. Cette fonction prend comme argument *year* entre 1995 et 2017.
-```{r}
-occ_plot <- function(year){
-  if (year < 1995) stop("Le loup venait juste d'arriver, pas la peine d'en faire une carte")
-  if (year > 2017) stop("Pas de données aussi récentes, va falloir attendre")
-  index <- year - 1994
-  grid_rect %>% 
-  ggplot() + 
-  geom_sf(alpha = 0, lwd = 0.01) + 
-  geom_sf(data = grid_poly, aes(fill = as_factor(z_mode[,index])), 
-          lwd = 0.01) + 
-  geom_sf(data = france %>% filter(NAME == "France"), alpha = 0) +
-  scale_fill_manual(name = "",
-                    values = c("gray90",
-                               "steelblue1"),
-                    labels = c("non-occupée", 
-                               "occupée")) +
-  labs(subtitle = year) +
-  theme(legend.position = "none")  
-}
-```
-
-On fait un essai avec l'année 2016.
-```{r}
-occ_plot(2016)
-```
-
-On fait 3 cartes pour les années 2000, 2010 et 2017.
-```{r}
-library(patchwork)
-plot_list <- lapply(X = c(2000, 2010, 2017), FUN = occ_plot)
-plot_list[[1]] | plot_list[[2]] | plot_list[[3]]
+                    labels = c("non-occupied cell", 
+                               "occupied cell")) +
+  labs(title = "Map of wolf occupancy in 2017")
 ```
