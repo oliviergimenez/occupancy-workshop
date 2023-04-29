@@ -1,6 +1,6 @@
 ---
 title: "Practical 3: Dealing with false positives"
-author: "Olivier Gimenez"
+author: "Olivier Gimenez (adapted from David Miller's code)"
 output:
   html_document:
     highlight: tango
