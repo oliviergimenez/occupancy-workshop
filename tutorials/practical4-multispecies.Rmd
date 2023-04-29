@@ -363,17 +363,16 @@ Now the estimated probability of co-occurrence of wolf and livestock:
 head(predict(m0, 'state', species = c('wolf', 'livestock')))
 ```
 
-What about wolf occupancy conditional on livestock being present:
+From these three quantities, we may compute the interaction factor $\eta$:
 ```{r}
-head(predict(m0, 'state', species = 'wolf', cond = 'livestock'))
+psiA <- predict(m0, 'state', species = 'livestock')[1,'Predicted']
+psiB <- predict(m0, 'state', species = 'wolf')[1,'Predicted']
+psiAB <- predict(m0, 'state', species = c('wolf','livestock'))[1,'Predicted']
+eta <- psiAB / (psiA * psiB)
+eta
 ```
 
-And wolf occupancy conditional on livestock being absent:
-```{r}
-head(predict(m0, 'state', species = 'wolf', cond = '-livestock'))
-```
-
-Clearly, wolf is attracted by livestock.
+There seems to be attraction (convergence). 
 
 A way to formally assess the existence of co-occurrence is to compare the model with co-occurrence to the model without co-occurrence. We fit the model without co-occurrence:
 
@@ -390,6 +389,34 @@ modSel(tog)
 ```
 
 The model with co-occurrence has a slightly lower AIC value, suggesting co-occurrence happens between wolf and livetock.
+
+<!-- Computing the confidence interval of the interaction factor is a bit tricky, and we resort to the delta-method: -->
+<!-- ```{r} -->
+<!-- se_psiA <- predict(m0, 'state', species = 'livestock')[1,'SE'] -->
+<!-- se_psiB <- predict(m0, 'state', species = 'wolf')[1,'SE'] -->
+<!-- se_psiAB <- predict(m0, 'state', species = c('wolf','livestock'))[1,'SE'] -->
+
+<!-- estmean <- c(psiAB, psiA, psiB) -->
+<!-- estvar <- c(se_psiAB, se_psiA, se_psiB)^2 -->
+
+<!-- # compute approx standard error -->
+<!-- se_eta <- msm::deltamethod (~ x1 / (x2 * x3), estmean, diag(estvar)) -->
+<!-- se_eta -->
+
+<!-- # compute confidence interval: -->
+<!-- c(eta - 1.96 * se_eta, eta + 1.96 * se_eta) -->
+<!-- ``` -->
+
+What about wolf occupancy conditional on livestock being present:
+```{r}
+head(predict(m0, 'state', species = 'wolf', cond = 'livestock'))
+```
+
+And wolf occupancy conditional on livestock being absent:
+```{r}
+head(predict(m0, 'state', species = 'wolf', cond = '-livestock'))
+```
+
 
 ## Model with co-occurrence and covariates
 
