@@ -12,7 +12,7 @@ navbar:
     - text: "Lectures"
       menu:
         - text: "Introduction"
-          href: slides/lectures_occupancy2.pdf
+          href: slides/lectures_occupancy.pdf
     - text: "Live demos"
       menu:
         - text: "Practical 1: Static"
