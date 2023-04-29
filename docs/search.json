@@ -6,20 +6,20 @@
       "description": "Some additional details about the website",
       "author": [],
       "contents": "\n\n\n\n",
-      "last_modified": "2023-04-29T16:18:33+03:00"
+      "last_modified": "2023-04-29T16:24:59+03:00"
     },
     {
       "path": "index.html",
       "title": "Estimating wolf occupancy with `R`",
       "author": [],
       "contents": "\nWhat: In this virtual workshop, we will show how to infer occupancy while accounting for imperfect detection. Using real case studies on wolves (Canis lupus), we will show how to estimate the proportion of area occupied by the species. We will also show how to asses the dynamic of occupancy by estimating colonization and extinction processes. If time allows, we will also cover recent models that allow accounting for false positives due to species misidentification as well as species interactions. The workshop will be a combination of lecture and live coding demonstrations in R using package unmarked.\nFor whom: This is a workshop for ecologists. Basic knowledge of R is required. See R for beginners by Emmanuel Paradis for an introduction.\nHow: The format of the workshop will be a combination of lectures and live demonstrations in R with packages unmarked.\nWho:\nLecturer: Olivier Gimenez\nWhen: May 16, 2023  2pm-5pm (Paris time UTC+2 GMT+1)\nWhere: On Zoom at https://umontpellier-fr.zoom.us/j/92442046534\nProgram\nIntroduction.\nStatic aka single-season occupancy models. Live demo.\nDynamic aka multi-season occupancy models. Live demo.\nOccupancy models with false positives. Live demo.\nInferring species co-occurrences. Live demo.\nConclusions.\nRequirements\nInstall R and RStudio. RStudio is recommended but not mandatory.\nInstall the R packages unmarked directly from the console with\n\n\ninstall.packages(\"unmarked\")\n\n\n\nReuse\nText and figures are licensed under Creative Commons Attribution CC BY 4.0. Any computer code (R, HTML, CSS, etc.) in slides and worksheets, including in slide and worksheet sources, is also licensed under MIT.\n\n\n\n",
-      "last_modified": "2023-04-29T16:18:33+03:00"
+      "last_modified": "2023-04-29T16:25:00+03:00"
     },
     {
       "path": "LICENSE.html",
       "author": [],
       "contents": "\nMIT License\nCopyright (c) 2023 Olivier Gimenez\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the “Software”), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n\n",
-      "last_modified": "2023-04-29T16:18:33+03:00"
+      "last_modified": "2023-04-29T16:25:00+03:00"
     }
   ],
   "collections": []
