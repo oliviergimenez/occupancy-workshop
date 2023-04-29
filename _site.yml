@@ -12,7 +12,7 @@ navbar:
     - text: "Lectures"
       menu:
         - text: "Introduction"
-          href: slides/lectures_occupancy.pdf
+          href: slides/lectures_occupancy2.pdf
     - text: "Live demos"
       menu:
         - text: "Practical 1: Static"
@@ -22,7 +22,7 @@ navbar:
         - text: "Practical 3: False positives"
           href: tutorials/practical3-falsepositives.html
         - text: "Practical 4: Multispecies"
-          href: tutorials/practical4-multispecies.html
+          href: tutorials/practical4-multispecies2.html
         - text: "Data"
           href: https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/data
         - text: "References"

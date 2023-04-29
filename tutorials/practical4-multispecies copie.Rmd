@@ -1,5 +1,5 @@
 ---
-title: "Practical 4: Multispecies models"
+title: "Practical 4: Multispecies"
 author: "Olivier Gimenez"
 output:
   html_document:

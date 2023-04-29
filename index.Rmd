@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = FALSE)
 **How**: The format of the workshop will be a combination of lectures and live demonstrations in `R` with packages `unmarked`.
 
 **Who**:   
-Lecturer: [Olivier Gimenez](https://twitter.com/oaggimenez)
+Lecturer: [Olivier Gimenez](https://oliviergimenez.github.io/)
 
 **When**: May 16, 2023 <br> 2pm-5pm (Paris time UTC+2 GMT+1)
 
@@ -22,7 +22,12 @@ Lecturer: [Olivier Gimenez](https://twitter.com/oaggimenez)
 
 ### Program 
 
-To be announced.
++ Introduction.
++ Static aka single-season occupancy models. Live demo.
++ Dynamic aka multi-season occupancy models. Live demo.
++ Occupancy models with false positives. Live demo.
++ Inferring species co-occurrences. Live demo.
++ Conclusions.
 
 ### Requirements
 
