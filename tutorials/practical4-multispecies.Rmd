@@ -460,9 +460,9 @@ zz2 %>% ggplot() +
 
 # What if more than 2 species?
 
-I provide data and code for a 3-species example from a paper by Dyck and colleagues entitled *Dracula’s ménagerie: A multispecies occupancy analysis of lynx, wildcat, and wolf in the Romanian Carpathians* published in Ecology and Evolution available at <https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.8921>. The code is available at , and the data at. 
+I provide data and code for a 3-species example from a paper by Dyck and colleagues entitled *Dracula’s ménagerie: A multispecies occupancy analysis of lynx, wildcat, and wolf in the Romanian Carpathians* published in Ecology and Evolution available at <https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.8921>. The code is available at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/scripts>, and the data at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/data>. 
 
-```{r echo=FALSE, fig.width=5, fig.height=15, fig.align='center'}
+```{r echo=FALSE, fig.align='center'}
 knitr::include_graphics("images/ece38921-fig-0004-m.jpg")
 ```
 

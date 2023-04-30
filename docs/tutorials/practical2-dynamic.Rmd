@@ -290,3 +290,4 @@ grid_rect %>%
                                "occupied cell")) +
   labs(title = "Map of wolf occupancy in 2017")
 ```
+
