@@ -247,9 +247,9 @@ re <- ranef(fm) # estimate posterior distribution of z
 z_mode <- bup(re, stat = "mode") # get mode of posterior distribution
 ```
 
-The `z_mode` object contains the estimated $z$ with cells in rows and years in columns. 
+The `z_mode` object contains the estimated $z$ with cells in rows and years in columns. In passing, if you wish to estimate the proportion of area occupied by the species (corrected by imperfect detection), you just need to sum the $z$ for each year, and divide by the number of sites.
 
-Get a map of France:
+Back to mapping occupancy, we'll need a map of France:
 ```{r}
 all_countries <-  st_read("shp/pays/Country.shp")
 france <- all_countries %>% filter(NAME == "France")

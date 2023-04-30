@@ -899,8 +899,11 @@ unbiased predictor (EBUP)”.</p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>re <span class="ot">&lt;-</span> <span class="fu">ranef</span>(fm) <span class="co"># estimate posterior distribution of z</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>z_mode <span class="ot">&lt;-</span> <span class="fu">bup</span>(re, <span class="at">stat =</span> <span class="st">&quot;mode&quot;</span>) <span class="co"># get mode of posterior distribution</span></span></code></pre></div>
 <p>The <code>z_mode</code> object contains the estimated <span class="math inline">\(z\)</span> with cells in rows and years in
-columns.</p>
-<p>Get a map of France:</p>
+columns. In passing, if you wish to estimate the proportion of area
+occupied by the species (corrected by imperfect detection), you just
+need to sum the <span class="math inline">\(z\)</span> for each year,
+and divide by the number of sites.</p>
+<p>Back to mapping occupancy, we’ll need a map of France:</p>
 <div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>all_countries <span class="ot">&lt;-</span>  <span class="fu">st_read</span>(<span class="st">&quot;shp/pays/Country.shp&quot;</span>)</span></code></pre></div>
 <pre><code>## Reading layer `Country&#39; from data source 
 ##   `/Users/oliviergimenez/Dropbox/OG/GITHUB/occupancy-workshop/tutorials/shp/pays/Country.shp&#39; 
