@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = FALSE)
 **Who**:   
 Lecturer: [Olivier Gimenez](https://oliviergimenez.github.io/)
 
-**When**: May 16, 2023 <br> 2pm-5pm (Paris time UTC+2 GMT+1)
+**When**: May 16, 2023 <br> 2pm-5pm (Paris time UTC/GMT+2)
 
 **Where**: On Zoom at <https://umontpellier-fr.zoom.us/j/92442046534>
 
