@@ -11,7 +11,7 @@ navbar:
       href: index.html
     - text: "Lectures"
       menu:
-        - text: "Introduction"
+        - text: "All slides"
           href: slides/lectures_occupancy.pdf
     - text: "Live demos"
       menu:
