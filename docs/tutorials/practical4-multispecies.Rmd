@@ -417,6 +417,25 @@ And wolf occupancy conditional on livestock being absent:
 head(predict(m0, 'state', species = 'wolf', cond = '-livestock'))
 ```
 
+We can estimate the realized occupancy of both species and therefore determine sites where both species are co-occurring. By doing so, you can infer hotspots of conflicts. 
+
+First get realized occupancy estimates for both species:
+```{r}
+re_liv <- ranef(m0, species = "livestock") # estimate posterior distribution of z
+z_liv <- bup(re_liv, stat = "mode") # get mode of posterior distribution
+re_wolf <- ranef(m0, species = "wolf") # estimate posterior distribution of z
+z_wolf <- bup(re_wolf, stat = "mode") # get mode of posterior distribution
+```
+
+Then determine sites where both species occur, and proportion
+```{r}
+both_species_present <- (z_liv + z_wolf) == 2
+cbind(z_liv, z_wolf, both_species_present) 
+sum(both_species_present) / length(both_species_present) # proportion
+```
+
+
+
 
 ## Model with co-occurrence and covariates
 
@@ -460,7 +479,7 @@ zz2 %>% ggplot() +
 
 # What if more than 2 species?
 
-I provide data and code for a 3-species example from a paper by Dyck and colleagues entitled *Dracula’s ménagerie: A multispecies occupancy analysis of lynx, wildcat, and wolf in the Romanian Carpathians* published in Ecology and Evolution available at <https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.8921>. The code is available at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/scripts>, and the data at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/data>. 
+I provide data and code for a 3-species example from a paper by Dyck and colleagues entitled *Dracula's ménagerie: A multispecies occupancy analysis of lynx, wildcat, and wolf in the Romanian Carpathians* published in Ecology and Evolution available at <https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.8921>. The code is available at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/scripts>, and the data at <https://github.com/oliviergimenez/occupancy-workshop/tree/main/tutorials/data>. 
 
 ```{r echo=FALSE, fig.align='center'}
 knitr::include_graphics("images/ece38921-fig-0004-m.jpg")
