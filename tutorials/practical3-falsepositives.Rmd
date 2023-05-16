@@ -37,7 +37,7 @@ library(unmarked)
 
 We use data from the paper *Determining Occurrence Dynamics when False Positives Occur: Estimating the Range Dynamics of Wolves from Public Survey Data* by Miller et al. published in Plos One and available at <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0065808>.
 
-Data are of 2 types. There are data from hunters who report whether they observed wolves while hunting for deer or elk. Other data comes from observations made by state agency personnel based on collaring and relocation by radio telemetry. Covariates include the amount of hunter effort, habitat quality, and whether observations were by hunters or agency personnel. Static analysis uses data from the year 2010.
+Data are of 2 types. There are data from hunters who report whether they observed wolves while hunting for deer or elk. Other data come from observations made by state agency personnel based on collaring and relocation by radio telemetry. Covariates include the amount of hunter effort, habitat quality, and whether observations were by hunters or agency personnel. Static analysis uses data from the year 2010.
 
 We thank David Miller for sharing the data.
 
@@ -57,8 +57,6 @@ Inspect data:
 ```{r}
 str(wolves)
 ```
-
-Short description to be done.
 
 # Modelling
 

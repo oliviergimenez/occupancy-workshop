@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 Load some packages:
 ```{r}
-library(tidyverse) # manipulate and visulaize data
+library(tidyverse) # manipulate and visualize data
 theme_set(theme_light(base_size = 16)) # set theme for visualisation and font size
 library(unmarked) # occupancy modelling
 ```
@@ -153,7 +153,7 @@ Inspect results:
 fm1
 ```
 
-Now we'd like to plot the occupancy probabilty estimates as a function of forest cover, and detection probability estimates as a function of effort. 
+Now we'd like to plot the occupancy probability estimates as a function of forest cover, and detection probability estimates as a function of effort. 
 
 First we create a grid of values for both covariates:
 ```{r}
